@@ -1,0 +1,2632 @@
+      program cctf
+      
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c  VERSION 4.3
+c
+c This code generates the CGGTTS files in a MULTI-CHANNEL approach
+c     from RINEX files at a sampling rate of 30 sec.
+c     using broadcast orbits and P3 code
+c
+c the files needed are:
+c    Rinex observation file of the day --> 'rinex_obs'
+c    Rinex observation file of the day after --> 'rinex_obs_p'
+c    Rinex Navigation file of the day --> 'rinex_nav'
+c    Rinex Navigation file of the day after --> 'rinex_nav_p'
+c    coordinates, calibration delays --> 'paramCGGTTS.dat'
+c
+c the soft asks for the mjd of the day to be treated
+c
+c The output is in the file 'CGGTTS.out'
+c    
+c The code has been written by Pascale DEFRAIGNE (p.defraigne@oma.be)
+c
+c            present version (V3.0) : june 2002
+c
+c june 28, 2002
+c version 3.1 : -add the generation of header
+c               -change rinex_nav reading in order to avoid
+c                to stop in case there are data for other days in the file
+c               -read(5,*)mjd rather than yy,mm,dd
+c
+c july 8, 2002
+c version 3.2 : - allow to use observations of which the date is not exactly at
+c                 0 or 30 sec, but 29.999 rather than 30 or 59.999 rather than 0.
+c               - allow reading of empty lines between observations in Rinex file
+c               - change the writing format of header to allow more characters
+c                 for cable and receivers delays
+c
+c september 18, 2002
+c version 3.3 : - add ,fr,hc in the declaration of integer variables
+c               - change the subroutine 'decal' for the schedule time determination
+c               - change  its=2+16*i   into  its=2+16*(i-1)
+c
+c september 15, 2003
+c version 3.4 : -changes w.r.t V3.3: reading of the ephemerides once, 
+c                 rather than at each computation
+c               -add a test to discard the WAAS satellite from the analyses
+c october 26, 2004
+c version 3.5 : -add the possibility to treat data at sec 0.001
+c                        -add the line "sec=sec+deltaT(ksec)"
+c                        -add a line in order to avoid to consider the first tracks of the day
+c                         when the rinex files begins later in the day:
+c                              if(ksec.eq.0.and.moment.gt.timestop+ds)goto 100
+c               -add the possibility to have different number of observables
+c                for in files rinex_obs and rinex_obs_p
+c april 21, 2005
+c version 3.6 : -change the way to treat the observations at sec 0.001 or xx.999
+c
+c november 3, 2005
+c version 4.0(BIPM) : -add TGD correction in the MSIO and MDIO values
+c                        -change the header in order to include the softawre version, 
+c                  and change the computation of CK in consequence
+c version special NOVATEL : uses C1 measurements and add bias(P1-C1) 
+
+c april 23, 2006
+c version 4.1(BIPM) : -change the tropo correction, in order to include altitude dependence
+c               -uses C1 measurements and add bias(P1-C1) 
+c
+c version 4.1(Septentrio) : changes with respect to V4.0(BIPM)
+c                           nov 18, 2005 (by Septentrio: Jan Defraine and Gustavo Lopez)
+c     -Splitting common head in commons for integer, character and reals
+c         (to avoid warning)
+c     -read mjd, names of observation & navigation files from
+c         inputFile (if it exists)
+c     -read & write from & to symbolic logical units
+c                e.g. 6 replaced by luscrn; 5 by lukeyb
+c     -most files are opened in subroutine opfil which also does 
+c         error trapping
+c     -added Function to return errors 
+c     - added stop codes of program
+c       code    meaning
+c         0     normal stop
+c         101     unexpected EOF in inputfile
+c         102     moving antenna
+c         103     moving antenna (in second call)
+c         104     corrupt data in observation file of next day
+c         105     corrupt data in observation file
+c         106     fail to open file (in subroutine opfil)
+c         107     fail to close file (in subroutine clfil)
+c
+c     - do loops termined by continue
+c     - indentations for it..then..else & for do loops
+c     - then on a continuation line this makes more readable
+c       indents possible
+c version 4.2(Septentrio) : changes with respect to V4.1(Septentrio)
+c                           dec 06, 2005 (by Septentrio: Gustavo Lopez)
+c   -The CKSUM for the header now counts only from the G in the CGGTTS row.
+c     this modification has been made in order to be compliant with the Standard 
+c   - inputFiles.dat renamed to inputFile.dat
+c 
+c
+c version 4.3(BIPM) : January 2009 (by Pascale DEFRAIGNE)
+c        upgrade with respect to version 4.1(BIPM): 
+c                 - introduces the changes made by Septentrio in versions 4.1(Septentrio) and 4.2(Septentrio)
+c                 - If C1P2 receiver (itestC1), the biases must be read in the file biasC1P1.dat (C1P1xxx.DCB from CODE)
+c                 - If C1P2 receiver (itestC1), correction of  mistake when applying the biases,
+c                        satnum(i) in version 4.1(BIPM) becomes satn(i) in version 4.3
+c                 - The information of which C1P1 file used is then added in the header of the CGGTTS file 
+c                 - Add a futher 13 min track in case there can be a 90th track beginning in the same day
+c                 - add ",end=1" in the reading for checksum computation.
+c                 - add "if(jkl.eq.3001)goto 150" in case there is no ephemeride for a satellite
+c              - (February 19, 2009): correction of the P1 P2 values for the header
+c
+c version 5 (ORB&BIPM): September 2011 (Pascale Defraigne & Aurelie Harmegnies)
+c       update for GLONASS L1P and L2P combination when possible
+c       works for mixed observation files, glonass navigation file of day+1 is required
+c       30/08/10 Results similar to those produced by TTS-3/4 receivers... Should be improved.
+c       Navigation data read for 30 minutes intervals at least. 
+c       RCV CLOCK OFFSET APPL parameter taken in account now 31/08 AH
+C       lflag=1 added: data read and used + warning 
+c       09-10/2010 : Added Runge Kutta integration
+c       03/12/10   : RK4 backward&forward
+c       22/12/10   : No correction PZ-90 -> WGS84
+c       28/02/11   : Buggs corrected:
+c                    If BRDC satellite field with only 0, satellite is skipped
+c                     #Types of OBS enlarged to OBSERV=18 
+c                    number of satellite for each epoch of observation enlarged to NN=36
+c       13/05/11   : REFGPS and SRGPS renamed in REFSYS and SRSYS
+c                    Add a new file for mixed output LUMOUT
+c       06/10/11  :  Modify the choice of the observation (between C1/P1, C2/P2)
+c                    removing of unhealthy satellites
+c                    Does not block the program if no P2 observation
+c       24/01/12   : does create the CGGTTS.gps or CGGTTS.glo files only if the sat of the constellation are observed
+c       09/03/12   : Create CGGTTS file even if rinex_obs_p is missing
+c
+c
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+
+      integer*4
+     1       LUFIL, LUSCRN, LUPARA,  LUINP,  LULOG,  LUOUT, LUBIAS, 
+     2      LUFOBS, LUFOBP,  LUNAV, LUNAVP,   IERR(100), istop, LUGNAV,
+     3      LUGNAVP, LUGOUT, LUMOUT
+	 
+      integer NN,OBSERV
+      parameter (NN=36,OBSERV=18)
+      integer TRKL(NN),yy,mm,dd,hh,min,he,prn,
+     1  satnum(NN),satn(NN),secsch,leapsec,       
+     1  colca,colcab,col1,col2,colP1b,colP2b,colP1a,colP2a,
+     1  colc2a,colc2b,
+     1  yn,mn,dn,hn,minn,schsat(100),schsatm(100),
+     2  schh(100),schmin(100),ic(NN),ichoice,
+     2  mjdtrk,IOE,ck,elv,azth,ch,fr,hc,pprn(3000)
+     
+      real*8 pi,vitlum,schtime(100),sec,secn,mjd,mjddep,      
+     1  brorb(3000,7,4),corrgeom,corprev,alpha,we,     
+     1  ds,djul,last,trel,tau,     deltatk,tgd,
+     1  antpos(3),x(3),xs(3),lla(3),Az,El,     
+     1  moment,timefirst,timestop,timenav,toc,trc,Ttr,    
+     1  tropo(26),mdtr,smdt,stdv, pc1(NN),pc2(NN),    
+     1  iono(26),mdio,smdi,measiono(26,NN),isg,     
+     1  refsv(26),refsvmil,srsv,refgps(26),refgpsmil,srgps,dsg,     
+     1  resquad(26,NN),pcor,cr,clocksat,svclk(3000,3),tclock,      
+     2  recdelP1,recdelP2,refdel,cabdel,deltaT(26),p2valobs(NN), 
+     4  epoch(26),valobs(OBSERV,NN),p1valobs(NN),datenav(3000),
+     4  bias(40),bias2(40),NS,DeltaN,mf,zpd,NSlog
+	 
+
+      logical status, stat , LOGOP
+      character*2 obs(OBSERV),class,schcl(5000),schclm(5000), brol
+      character*3 frc,frc1,frc2,fr1(nn),fr2(nn),ff1(nn),ff2(nn)
+      CHARACTER*7 CHSTAT, CHOLD, CHUNKO,lengC1P1
+      character*30 param,REF,LAB,RCVR,REVDATE,COMMENTS,FRAME 
+      character*20 comment,dateC1P1,dateC2P2
+      character*80 string
+      character*1 satgroup(NN)
+      character*135 name
+      character*512 FNAV, FNAVP, FOBS, FOBSP, FLOUT, NAMFIL, FLLOG,
+     1	            GNAV,GNAVP,FLGOUT,FLMOUT
+      character*3 sversion
+      character*1 param1(30),para
+      CHARACTER*1200 strerr
+      logical exists
+	  
+C    GLONASS ADDITION 	 
+      real*8 recdelP1glo,recdelP2glo,tauCa,tauCb,
+     1    secg,r,datenavglo(1000),clkoffset,temp
+      real*8 coef1,coef2,trcprev,dte,tauNtmp,gammaNtmp,tktmp,
+     1    timenavprev,xsp(3),xsm(3),vit(3),delta,x1,x2,x3
+      real*8 sp3(1000,24,3),tocglo(1000),clock(1000,24,3),freq(1000,24),z,
+     1    v(1000,24,3),g(1000,24,3),r2,r3,xsn,ysn,zsn,vxsn,vysn,vzsn,
+     1    gxsn,gysn,gzsn,health(1000,24)
+      integer i,prng,yg,mg,dg,hg,ming,nbeph(3),
+     1    xx,nl,a
+      logical ofset
+      character*2 year,month,day
+
+      equivalence(param1(1),param)
+
+      common/headint/ ch, LUOUT, LUGOUT, LUMOUT !AH 13/05
+      common/headrel8/ antpos, recdelP1,recdelP2,cabdel,refdel,
+     1                 recdelP1glo,recdelP2glo
+      common/headchar/ LAB,REF,RCVR,REVDATE,COMMENTS,FRAME
+      common/leap/leapsec
+
+
+c     definition of logical units
+c     i/o unit value symbol   filename            meaning
+c    lukeyb  5   -         -            input from keyboard
+c    luscrn  6   -         -            output to screen
+c    lupara  9   -    'paramCGGTTS.dat'     parameterfile
+c    lubias 25   -    'biasC1P1.dat'        biases file
+c    lubias2 26   -    'biasC2P2.dat'        biases file
+c    luout  10  FLOUT      'CGGTTS.gps'     GPS output file
+c    lugout 12  FLGOUT      'CGGTTS.glo'    glonass output file 
+c    luout  11  FLLOG       'cggtts.log'    outputfile
+c    lulog  94   -         'cggtts.log'     logfile
+c    luinp  93   -     'inputFile.dat'      mjd & nav & obs names
+c    lufobs  7  FOBS        'rinex_obs'     observation file
+c    lufofp 71 FOBSP      'rinex_obs_p'     observation file next day 
+c    lunav  16  FNAV        'rinex_nav'     navigation file
+c    lunavp 81 FNAVP      'rinex_nav_p'     navigation file next day
+c    lugnav  17  FNAV     'rinex_nav_glo'   glonass navigation file
+c    lugnavp 82 GNAVP     'rinex_nav_glo_p' glonass navigation file of next day
+c *** note ***
+c          the filenames FOBS, FOBSP, FNAV, FNAVP, FLOUT, FLLOG
+c          can be redifined in the inpufile 'inputFile.dat'
+c
+      DATA     LUKEYB,      LUSCRN,      LUPARA
+     +/          5,            6,          9/
+      DATA      LUOUT,       LUPRT,      LULOG
+     +/         10,           92,         94/
+      DATA      LUINP,      LUFOBS,      LUFOBP
+     +/         93,            7,         71/
+      DATA      LUNAV,      LUNAVP,      LUBIAS,      LUBIAS2
+     +/         16,           81,         25,         26/
+      DATA      LUGNAV,     LUGNAVP
+     +/         17,           82/
+      DATA      LUGOUT,     LUMOUT  
+     +/         12,           13/      !AH 13/05
+     
+
+      DATA CHOLD, CHUNKO /'OLD    ','UNKNOWN'/
+c                          1234567   1234567
+
+
+c     **** start of executable code ****
+
+c      default logfile is not open yet
+      LOGOP = .FALSE.
+C      LUPARA = 9
+C      LUBIAS = 25
+C      LUBIAS2 = 26
+C      LUOUT = 10
+C      LUGOUT =12
+c      LUMOUT=13   !AH 13/05
+c      LULOG = 11
+C      LUPRT = 92
+C      LULOG = 94
+C      LUINP = 93
+C      LUFOBS = 7
+C      LUFOBP = 71
+C      LUNAV = 16
+C      LUNAVP = 81
+C      LUGNAV = 17
+C      LUGNAVP = 82
+
+      fr=0
+      hc=0
+      exists=.false.
+
+c     Define the version of the Program (variable so it is modified only once)
+c     This should be 3 characters maximum otherwise modify the defined size
+C      sversion='4.3'
+      sversion='5.0'
+      
+      do i=1,iargc()
+      CALL getarg(i,string)
+      if(string.eq.'-V')then
+      write(*,*)'rin2cgg-',sversion
+      exit
+      endif
+      enddo
+      
+c     open parameter file must exist
+      LUFIL = LUPARA
+      NAMFIL = 'paramCGGTTS.dat'
+      CHSTAT = CHOLD
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)
+     
+     
+   
+c     default file names
+c     navigation file
+      FNAV = 'rinex_nav'
+c     navigation file next day
+      FNAVP = 'rinex_nav_p'
+c     glonass navigation file
+      GNAV = 'rinex_nav_glo'
+c     glonass navigation file next day
+      GNAVP = 'rinex_nav_glo_p'
+c     observation file
+      FOBS = 'rinex_obs'
+c     observation file next day
+      FOBSP = 'rinex_obs_p'
+c     GPS output file
+      FLOUT = 'CGGTTS.gps'
+c     GLONASS output file
+      FLGOUT = 'CGGTTS.glo'
+c     GLONASS+GPS output file
+      FLMOUT = 'CGGTTS.mix'
+c     Log output file
+      FLLOG = 'CGGTTS.log'
+c     default set flag modified julian day is not defined
+      mjd = -1.0
+      frc='L3P'
+      
+      
+c     open input file if it exists
+c    subroutine opfil cannot be used as the inputFile may not exist then ierr is not 0
+      LUFIL = LUINP
+      NAMFIL = 'inputFile.dat'
+      CHSTAT = CHOLD
+      OPEN(UNIT=LUFIL, FILE= NAMFIL,
+     1     STATUS= CHSTAT, IOSTAT= IERR(LUFIL))
+
+      ICOUNT = 0
+      IF(IERR(LUFIL) .EQ. 0)THEN         
+      REWIND LUINP
+
+ 5001 CONTINUE
+        READ(LUINP,989, END=5003) PARAM
+        IF(PARAM .EQ. 'FILE_RINEX_NAV') READ(LUINP,5000) FNAV
+        IF(PARAM .EQ. 'FILE_RINEX_NAV') ICOUNT = ICOUNT + 1
+
+        IF(PARAM .EQ. 'FILE_RINEX_NAV_P') READ(LUINP,5000) FNAVP
+        IF(PARAM .EQ. 'FILE_RINEX_NAV_P') ICOUNT = ICOUNT + 1
+		
+        IF(PARAM .EQ. 'FILE_RINEX_NAV_GLO_P') READ(LUINP,5000) GNAVP
+		
+        IF(PARAM .EQ. 'FILE_RINEX_NAV_GLO') READ(LUINP,5000) GNAV
+		
+        IF(PARAM .EQ. 'FILE_RINEX_OBS') READ(LUINP,5000) FOBS
+        IF(PARAM .EQ. 'FILE_RINEX_OBS') ICOUNT = ICOUNT + 1
+        
+        IF(PARAM .EQ. 'FILE_RINEX_OBS_P') READ(LUINP,5000) FOBSP
+        IF(PARAM .EQ. 'FILE_RINEX_OBS_P') ICOUNT = ICOUNT + 1
+		
+        IF(PARAM .EQ. 'FILE_CGGTTS_GLO') READ(LUINP,5000) FLGOUT
+        
+        IF(PARAM .EQ. 'FILE_CGGTTS_LOG') READ(LUINP,5000) FLLOG
+        
+        IF(PARAM .EQ. 'FILE_CGGTTS_OUT') READ(LUINP,5000) FLOUT
+	
+        IF(PARAM .EQ. 'FILE_CGGTTS_MIX') READ(LUINP,5000) FLMOUT
+                                  
+        IF(PARAM .EQ. 'MODIFIED_JULIAN_DAY') READ(LUINP,*) MJD
+        IF(PARAM .EQ. 'MODIFIED_JULIAN_DAY') ICOUNT = ICOUNT + 1
+
+ 5000   FORMAT(A512)
+c       check if all ten data parameters are read (7 (GPS) + 4 (GLO)
+c        IF(ICOUNT .EQ. 5)
+c     1  THEN
+c         an outputfile new or existing file will be overwritten                       
+          
+C         an outputfile new or existing file will be overwritten          
+c       ENDIF            
+c     more data to be read
+c     loop to the begin
+      IF(ICOUNT.NE.5)GOTO 5001
+                         
+ 5003 CONTINUE
+c       unexpected end of file detected
+        IF(ICOUNT.NE.5)then
+	WRITE(strerr,5004) ICOUNT
+ 5004   FORMAT('Read beyond EOF in file inputFile.dat',/,
+     1         ' icount= ',I3)
+        istop = 101
+        call erstop (istop, strerr, logop, luscrn, lulog)
+        ENDIF
+      ENDIF
+
+          LUFIL = LULOG
+          NAMFIL = FLLOG
+          CHSTAT = CHUNKO
+          CALL OPFIL
+     1        (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)
+          IF(IERR(LUFIL) .EQ. 0) LOGOP = .TRUE.   
+       
+
+c     Write the version of the program at start-up
+      write(LUSCRN,*)' Program rin2cgg version ',sversion
+      IF(LOGOP) WRITE(LULOG,*) ' Program rin2cgg version ',sversion
+                              
+      WE=7.292115d-5
+      vitlum=299792458.0d0
+      pi=3.1415926535898d0     
+c tropo parameters       
+       NS=324.8d0
+       DeltaN=-7.32d0*dexp(0.005577d0*Ns)  
+       NSLOG= dlog((NS+DeltaN)/105.d0 )          
+
+c     READING OF PARAMETERS:
+
+ 989  format(a30)
+      do 1 ipar=1,25
+         read(lupara,989,end=129)param
+ 1005    format(1x,40a1)
+         if(param.eq.'REV DATE')     read(LUPARA,989)revdate
+         if(param.eq.'RCVR')         read(LUPARA,989)rcvr
+         if(param.eq.'CH')           read(LUPARA,*)CH
+         if(param.eq.'LAB NAME')     read(LUPARA,989)LAB
+         if(param.eq.'X COORDINATE') read(LUPARA,*)antpos(1)
+         if(param.eq.'Y COORDINATE') read(LUPARA,*)antpos(2)
+         if(param.eq.'Z COORDINATE') read(LUPARA,*)antpos(3)
+         if(param.eq.'COMMENTS')     read(LUPARA,989)COMMENTS
+         if(param.eq.'FRAME')        read(LUPARA,*)frame
+         if(param.eq.'REF')          read(LUPARA,989)REF
+         if(param.eq.'INT DELAY P1 XR+XS (in ns)')
+     1                               read(LUPARA,*)recdelP1
+         if(param.eq.'INT DELAY P1 GLO (in ns)')
+     1                               read(LUPARA,*)recdelP1glo
+         if(param.eq.'INT DELAY C1 XR+XS (in ns)')
+     1                               read(LUPARA,*)recdelP1
+         if(param.eq.'INT DELAY P2 XR+XS (in ns)')
+     1                               read(LUPARA,*)recdelP2
+         if(param.eq.'INT DELAY P2 GLO (in ns)')
+     1                               read(LUPARA,*)recdelP2glo	
+         if(param.eq.'ANT CAB DELAY (in ns)')
+     1                               read(LUPARA,*)cabdel
+         if(param.eq.'LEAP SECOND')  read(LUPARA,*)leapsec	 	
+         if(param.eq.'CLOCK CAB DELAY XP+XO (in ns)')
+     1                               read(LUPARA,*)refdel
+
+ 1    continue
+	
+
+c     open outputfile new or existing file will be overwritten      
+129   continue
+
+      LUFIL = LUOUT
+      NAMFIL = FLOUT
+      CHSTAT = CHUNKO
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)
+c     glonass	 
+      LUFIL = LUGOUT
+      NAMFIL = FLGOUT
+      CHSTAT = CHUNKO
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)
+c     mixed output	 
+      LUFIL = LUMOUT
+      NAMFIL = FLMOUT
+      CHSTAT = CHUNKO
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)
+ 
+c     internal delays in m:
+      recdelP1 = recdelP1*vitlum*1.0d-9
+      recdelP2 = recdelP2*vitlum*1.0d-9
+      recdelP1glo = recdelP1glo*vitlum*1.0d-9
+      recdelP2glo = recdelP2glo*vitlum*1.0d-9
+	  
+c     cable delays in 0.1 ns:
+      cabdel = cabdel*10.
+      refdel = refdel*10.      
+	  
+c     DETERMINATION OF THE TRACKS OF THE DAY
+c     MJDdep is the reference date for the schedules  (1 October 1997)
+      nsch=89
+      ileaps=leapsec/30
+      ileaps=(ileaps+1)*30
+
+c     check if modified julian date has been read from input file
+      if(mjd .eq. -1.0)
+     1then
+         write(LUSCRN,*) ' enter mjd:'
+         read(LUKEYB,*)mjd
+      endif
+      mjddep=50722.0
+      do 22 i=1,nsch
+          its=2+16*(i-1)
+          mi=mod(its,60)
+          he=its/60
+          call decal(mjd,mjddep,he,mi,schh(i),schmin(i))
+          schtime(i)=mjd+schh(i)/24.d0+schmin(i)/24.d0/60.d0
+     1    + dble(ileaps)/86400.d0
+   22 continue      
+
+     
+       call classement(schh,schmin,schtime,89)
+       
+      if(schmin(89).lt.43)then
+      nsch=90
+      schh(90)=schh(89)
+      schmin(90)=schmin(89)+16
+      schtime(90)=schtime(89)+dble(16.d0/1440.d0)
+      endif
+      
+       
+c     dble(ileaps)/86400.d0 is added in order to account for the difference between the 
+c    GPS time used in the RINEX files and UTC which is used in the tracking schedules    
+                         
+     
+c    observation files:
+
+C      open(unit=7,file='rinex_obs')
+C      open(unit=71,file='rinex_obs_p')
+C      open(unit=16,file='rinex_nav')
+C      open(unit=81,file='rinex_nav_p')
+C      open(unit=17, file='rinex_nav_glo')
+C      open(unit=82,file='rinex_nav_glo_p')
+C      open(unit=83,file='rinex_nav_glo_m')
+
+c     open observation file must exist      
+      LUFIL = LUFOBS
+      NAMFIL = FOBS
+      CHSTAT = CHOLD
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFil),CHSTAT,LOGOP,NAMFIL)
+      
+c     open observation file next day must exist      
+      LUFIL = LUFOBP
+      NAMFIL = FOBSP
+      CHSTAT = CHUNKO  !(runs if rinex_obs_p is missing)
+c     CHSTAT = CHOLD
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)
+              read(LUFIL,*,end=1001)
+	 backspace LUFIL
+	 goto 1002
+
+1001     write(LUSCRN,'("Warning: file unit ",i4," ( ",a," )",
+     1  " is empty")')LUFIL,trim(NAMFIL)
+     	 write(LULOG,'("Warning: file unit ",i4," ( ",a," )",
+     1  " is empty")')LUFIL,trim(NAMFIL)
+	 IERR(LUFIL)=1
+1002     continue 
+      
+c     open navigation file must exist      
+      LUFIL = LUNAV
+      NAMFIL = FNAV
+      CHSTAT = CHOLD
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)
+
+c     open navigation fil next day must exist      
+      LUFIL = LUNAVP
+      NAMFIL = FNAVP
+      CHSTAT = CHOLD
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)	
+	 
+c     open glonass navigation file must exist      
+      LUFIL = LUGNAV
+      NAMFIL = GNAV
+c      CHSTAT = CHOLD
+      CHSTAT = CHUNKO 
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)
+          read(LUFIL,*,end=1003)
+	 backspace LUFIL
+	 goto 1004
+1003     IERR(LUFIL)=1
+1004     continue 
+
+c     open glonass navigation file next day must exist      
+      LUFIL = LUGNAVP
+      NAMFIL = GNAVP
+c      CHSTAT = CHOLD
+      CHSTAT = CHUNKO 
+      CALL OPFIL
+     1    (LUFIL, LUSCRN, LULOG,IERR(LUFIL),CHSTAT,LOGOP,NAMFIL)	 
+         read(LUFIL,*,end=1006)
+	 backspace LUFIL
+	 goto 1007
+1006     IERR(LUFIL)=1
+1007     continue 	 
+	 
+c    reading of GPS ephemerides
+
+       do jkl=1,3000
+       datenav(jkl)=0.d0
+       pprn(jkl)=0
+        do k=1,3
+        svclk(jkl,k)=0.d0
+        enddo
+        do k=1,7
+         do l=1,4
+         brorb(jkl,k,l)=0.d0
+         enddo
+        enddo
+       enddo
+               
+       jkl=0
+     
+  6    IF(IERR(LUNAV).eq.0)THEN
+       read(LUNAV,777)comment
+       if(comment.eq.'END OF HEADER')then
+       goto 7
+       else
+       goto 6
+       endif
+       ENDIF
+       
+  7    IF(IERR(LUNAVP).eq.0)THEN
+       read(LUNAVP,777)comment
+       if(comment.eq.'END OF HEADER')then
+       goto 75
+       else
+       goto 7
+       endif
+75     continue
+       ENDIF
+
+c    reading of ephemerides  
+       IF(IERR(LUNAV).eq.0)THEN
+       do 9 jkl=1,1500
+        read(LUNAV,90,end=12)prn,yn,mn,dn,hn,minn,secn,
+     1                            (svclk(jkl,i),i=1,3)
+        call datemjd(yn,mn,dn,hn,minn,secn,Timenav)
+        datenav(jkl)=Timenav
+            pprn(jkl)=prn
+        do 8 j=1,7
+         read(LUNAV,91)(brorb(jkl,j,i),i=1,4)   
+   8    continue
+   9   continue
+       ENDIF
+ 
+ 12    jklprev=jkl
+   
+       IF(IERR(LUNAVP).eq.0)THEN
+       do 10 jkl=jklprev,3000
+        read(LUNAVP,90,end=13)prn,yn,mn,dn,hn,minn,secn,
+     1                              (svclk(jkl,i),i=1,3)
+        call datemjd(yn,mn,dn,hn,minn,secn,Timenav)
+        datenav(jkl)=Timenav
+            pprn(jkl)=prn
+        do 108 j=1,7
+         read(LUNAVP,91)(brorb(jkl,j,i),i=1,4)
+ 108    continue
+10     continue
+       ENDIF
+
+   90 format(i2,5i3,f5.1,3d19.12)
+   91 format(3x,4d19.12)
+   
+13     continue
+
+c    Reading of GLONASS ephemerides
+C    Header
+       comment='NC     '
+       IF(IERR(LUGNAV).eq.0)THEN
+       do while (comment.ne.'END OF HEADER')
+	   read(LUGNAV,777)comment
+
+       if(comment.eq.'CORR TO SYSTEM TIME') then
+	   backspace 17
+	   read(LUGNAV,'(21X,d19.12)')tauCa
+	   tauCa=-tauCa
+       endif	   
+       enddo
+       ENDIF	   
+	   
+C NEXT DAY FILE
+       comment='NC     '
+       IF(IERR(LUGNAVP).eq.0)THEN
+       do while (comment.ne.'END OF HEADER')
+	   read(LUGNAVP,777)comment
+       if(comment.eq.'CORR TO SYSTEM TIME') then
+	   backspace 82
+	   read(LUGNAVP,'(21X,d19.12)')tauCb
+	   tauCb=-tauCb
+       endif	   
+       enddo
+       ENDIF
+	   
+C    Read content of previous file
+
+      do ii=1,1000
+      do jj=1,24
+      health(ii,jj)=1.d0
+      freq(ii,jj)=0.d0
+      do kk=1,3
+      sp3(ii,jj,kk)=0.d0
+      v(ii,jj,kk)=0.d0
+      g(ii,jj,kk)=0.d0
+      clock(ii,jj,kk)=0.d0
+      enddo
+      enddo
+      enddo
+
+       nbephem=1
+       Timenavprev=0.
+       jkl=0
+       k=0
+C    Read content of current file
+C    Extract only 30min interval ephemerides
+       IF(IERR(LUGNAV).eq.0)THEN
+       do i=1,1500
+       read(LUGNAV,95,end=16)prng,yg,mg,dg,hg,ming,secg,
+     1    TauNtmp,gammaNtmp,tktmp
+
+        call leapscorr(yg,mg,dg,hg,ming,secg,leapsec)
+	call datemjd(yg,mg,dg,hg,ming,secg,Timenav)
+	if(Timenav.ne.Timenavprev)then
+	  if(dabs(Timenav-Timenavprev).lt.0.02)then
+	    read(LUGNAV,*)string
+	    read(LUGNAV,*)string
+	    read(LUGNAV,*)string
+	    cycle
+	  endif
+	  jkl=jkl+1
+	  k=1
+	else
+	  k=k+1
+	endif
+	Timenavprev=Timenav
+	datenavglo(jkl)=Timenav
+	clock(jkl,prng,1)=-TauNtmp
+	clock(jkl,prng,2)=gammaNtmp			
+	clock(jkl,prng,3)=tktmp
+        read(LUGNAV,'(3X,4d19.12)')sp3(jkl,prng,1),
+     1        v(jkl,prng,1),g(jkl,prng,1),health(jkl,prng)
+        read(LUGNAV,'(3X,4d19.12)')sp3(jkl,prng,2),
+     1        v(jkl,prng,2),g(jkl,prng,2),freq(jkl,prng)
+        read(LUGNAV,'(3X,3d19.12)')sp3(jkl,prng,3),
+     1        v(jkl,prng,3),g(jkl,prng,3)
+       enddo
+       ENDIF
+  16  continue
+  
+	nbeph(1)=jkl
+
+95    format(5(i2,1X),i2,d5.1,3(E19.12))
+96    format(3X,4d19.12)
+
+C    Read content of next file
+
+       IF(IERR(LUGNAVP).eq.0)THEN
+      do i=1,1500
+        read(LUGNAVP,95,end=17)prng,yg,mg,dg,hg,ming,secg,
+     1    TauNtmp,gammaNtmp,tktmp
+
+        call leapscorr(yg,mg,dg,hg,ming,secg,leapsec)
+        call datemjd(yg,mg,dg,hg,ming,secg,Timenav)
+
+        if(Timenav.ne.Timenavprev)then
+          if(dabs(Timenav-Timenavprev).lt.0.02)then
+            read(LUGNAVP,*)string
+            read(LUGNAVP,*)string
+            read(LUGNAVP,*)string
+            cycle
+          endif
+          jkl=jkl+1
+          k=1
+        else
+          k=k+1
+        endif
+        Timenavprev=Timenav
+        datenavglo(jkl)=Timenav
+ 	clock(jkl,prng,1)=-TauNtmp
+ 	clock(jkl,prng,2)=gammaNtmp			
+ 	clock(jkl,prng,3)=tktmp
+
+        read(LUGNAVP,'(3X,4d19.12)')sp3(jkl,prng,1),
+     1        v(jkl,prng,1),g(jkl,prng,1),health(jkl,prng)
+        read(LUGNAVP,'(3X,4d19.12)')sp3(jkl,prng,2),
+     1        v(jkl,prng,2),g(jkl,prng,2),freq(jkl,prng)
+        read(LUGNAVP,'(3X,3d19.12)')sp3(jkl,prng,3),
+     1        v(jkl,prng,3),g(jkl,prng,3)
+    
+      enddo
+      ENDIF
+  17  continue
+
+      nbeph(2)=jkl-nbeph(1)
+      nbeph(3)=jkl
+      
+ 		
+      do 660 jkl=1,nbeph(3)
+         djul=datenavglo(jkl)-44244.D0
+         djul=dmod(djul,7.D0)  
+         tocglo(jkl)=djul*86400.D0
+  660  continue
+   
+c       do jkl=2,nbeph(3)
+c        if(tocglo(jkl).lt.tocglo(jkl-1))then
+c          tocglo(jkl)=tocglo(jkl)+604800.
+c        endif
+c      enddo 
+
+	  
+c    reading of the header of the observation file
+
+      itestC1=0
+      itestC2=0
+      colP1a=0
+      colP2a=0
+      colca=0
+      colc2a=0
+      colc2b=0
+      colP1b=0
+      colP2b=0
+      colcab=0
+      ofset=.false.
+
+   70 format(i6,9(4x,a2))
+   77 format(6x,9(4x,a2))
+ 777  format(60x,a20)
+
+       IF(IERR(LUFOBS).eq.0)THEN
+      read(LUFOBS,*)rform
+      iforma=int(rform)
+      
+  57  read(LUFOBS,777) comment
+
+      if(comment.eq.'RCV CLOCK OFFS APPL')then
+        backspace 7
+        read(LUFOBS,'(5x,i1)')a
+        if(a.eq.1)ofset=.true.
+      endif
+      if(comment.eq.'# / TYPES OF OBSERV ')
+     1 then
+        backspace 7
+        read(LUFOBS,70)nbobsa,(obs(i),i=1,min0(9,nbobsa))
+        if(nbobsa.gt.9)read(LUFOBS,77)(obs(i),i=10,nbobsa)
+	
+        do 2 i=1,nbobsa        
+	 if(obs(i).eq.'P1')colP1a=i
+         if(obs(i).eq.'P2')colP2a=i
+         if(obs(i).eq.'C1')colca=i
+         if(obs(i).eq.'C2')colc2a=i
+   2    continue
+	 if(colP1a.eq.0)itestC1=1
+	 if(colP2a.eq.0)itestC2=1
+        goto 57
+      else
+        if((iforma.eq.2.and.comment.eq.'END OF HEADER       ').
+     1  or.(iforma.eq.1.and.comment.eq.'                    '))
+     2  then
+          goto 58
+        else
+          goto 57
+        endif
+      endif 
+      ELSE
+      write(6,*)'NO RINEX OBS FILE: STOP'
+      stop
+      ENDIF
+           
+  58   IF(IERR(LUFOBP).eq.0)THEN
+      read(LUFOBP,*)rform
+      iformb=int(rform)
+  59  read(LUFOBP,777)comment
+      if(comment.eq.'RCV CLOCK OFFS APPL')then
+        backspace 71
+        read(LUFOBP,'(5x,i1)')a
+        if(a.eq.1)ofset=.true.
+      endif
+      if(comment.eq.'# / TYPES OF OBSERV ')
+     1 then
+        backspace 71
+        read(LUFOBP,70)nbobsb,(obs(i),i=1,min0(9,nbobsb))
+        if(nbobsb.gt.9)read(LUFOBP,77)(obs(i),i=10,nbobsb)
+        do 82 i=1,nbobsb
+         if(obs(i).eq.'P1')colP1b=i
+         if(obs(i).eq.'P2')colP2b=i
+         if(obs(i).eq.'C1')colcab=i
+         if(obs(i).eq.'C2')colc2b=i
+  82    continue
+        goto 59
+      else
+        if((iformb.eq.2.and.comment.eq.'END OF HEADER       ').
+     1     or.(iformb.eq.1.and.comment.eq.'                    '))
+     2  then
+          goto 105
+        else
+          goto 59
+        endif
+      endif       
+      ENDIF
+          
+105   ipass=0
+      ipassv=0
+      
+c    last reading in the rinex file of the day     
+      last=mjd+1.d0-30.d0/86400.d0
+      
+c    ds= security delay for time comparisons
+c       (moment and timefirst or timestop)                
+      ds=0.1d0/86400.d0           
+      
+      
+      IF(itestC1.eq.1)THEN
+      
+c open BIAS file if necessary
+
+      LUFIL = LUBIAS
+      NAMFIL = 'biasC1P1.dat'
+      CHSTAT = CHOLD
+      OPEN(UNIT=LUFIL, FILE= NAMFIL,
+     1     STATUS= CHSTAT, IOSTAT= IERR(LUFIL))
+      
+c     READING OF BIASES C1-P1:   (updated for GLONASS 02/09/11)
+
+      read(lubias,801)lengC1P1,dateC1P1
+ 801  format(7x,a7,24x,a20)
+ 802  read(lubias,989)param
+      if(param(1:1).ne.'G')goto 802
+      backspace(lubias)
+      
+      do iprn=1,100 
+      read(lubias,804,end=627)para,inp,temp
+      if(para=='G')bias(inp)=temp
+      enddo
+      
+
+ 627  continue
+ 803  format(1x,i2,20x,f12.1)
+ 804  format(1a,i2,20x,f12.1)
+
+      ENDIF
+
+
+      IF(itestC2.eq.1)THEN
+c open BIAS file if necessary
+
+      LUFIL = LUBIAS2
+      NAMFIL = 'biasC2P2.dat'
+      CHSTAT = CHOLD
+      OPEN(UNIT=LUFIL, FILE= NAMFIL,
+     1     STATUS= CHSTAT, IOSTAT= IERR(LUFIL))
+      
+c     READING OF BIASES C2-P2:   (updated for GLONASS 02/09/11)
+
+      read(lubias2,'(65x,a9)')dateC2P2
+      do i=1,38
+      read(lubias2,989,end=628)param
+      if(param(1:1).eq.'G'.and.param(2:2).ne.' ')then
+      backspace(lubias2)
+      read(lubias2,803)inp,temp
+      bias2(inp)=temp
+      endif
+      enddo
+      
+
+ 628  continue
+
+      ENDIF
+
+      
+ 234	continue  
+ 
+ 
+c     CREATE THE HEADER OF THE OUTPUT FILE 
+      call header(sversion,itestc1,lengC1P1,dateC1P1)
+!      call header(sversion,itestc1,0,0)
+      write(LUOUT,101)
+      write(LUOUT,102)
+      write(LUGOUT,101)
+      write(LUGOUT,102)
+      write(LUMOUT,101)
+      write(LUMOUT,102)
+c같같같같같같같같같같같같같같같같같같같      
+c    begin the run for each track
+c같같같같같같같같같같같같같같같같같같같        
+      
+      iv=0
+      itestGPS=0
+      itestGLO=0
+      
+      do 100 isch=1,nsch
+ 
+      clkoffset=0
+      ipk=0
+      ksec=0
+      timefirst=schtime(isch)
+      do 1516 isat=1,25
+       TRKL(isat)=0 
+		ic(isat)=0
+        do 1513 kkk=1,26
+          measiono(kkk,isat)=0.d0
+          resquad(kkk,isat)=0.d0
+ 1513   continue
+ 1516 continue
+      moment=0.d0
+      timestop=schtime(isch)+13.d0/60.d0/24.d0-1.d0/86400.d0
+      
+c     reading of observations     
+
+  89  if(iv.eq.1.and.IERR(LUFOBP).eq.0)THEN
+       read(LUFOBP,776,end=1000)string
+
+!       if(string.eq.' ')goto 89
+       read(string,78)lflag
+       if(lflag.eq.0.or.lflag.eq.1)then
+c        backspace 71    
+        read(string,71)yy,mm,dd,hh,min,sec,lflag,nnsat,
+     1        (satgroup(i),satnum(i),i=1,min0(12,nnsat))
+	 read(string(69:80),'(f12.9)')clkoffset
+	 if(lflag.eq.1)then
+	 write(*,*)'Power failure (lflag=1) -- skip'
+	 IF(LOGOP)write(LULOG,*)'Power failure (lflag=1) -- skip'
+	 endif
+	 if(nnsat.gt.12)read(LUFOBP,72)
+     1   (satgroup(i),satnum(i),i=13,min0(24,nnsat))
+     	 if(nnsat.gt.24)read(LUFOBP,72)
+     1   (satgroup(i),satnum(i),i=25,nnsat)
+       elseif(lflag.eq.4)
+     1 then
+c        backspace 71
+         read(string,74)lflag,nline
+        do 35 ii=1,nline
+         read(LUFOBP,*)
+  35    continue
+        goto 89
+        elseif(lflag.eq.2)
+     1  then          
+          write(strerr,*)'Moving antenna--stop'
+          istop = 102
+          call erstop (istop, strerr, logop, luscrn, lulog)
+          endif
+       
+       ENDIF
+       
+       if(iv.eq.0)then
+              
+       read(LUFOBS,776,end=1000)string
+!       if(string.eq.' ')goto 89    
+       read(string,78)lflag
+C lflag=1 added AH
+       if(lflag.eq.0.or.lflag.eq.1)    
+     1 then
+c        backspace 7
+	read(string,71)yy,mm,dd,hh,min,sec,lflag,nnsat,
+     1  (satgroup(i),satnum(i),i=1,min0(12,nnsat))
+ !       write(6,*)yy,mm,dd,hh,min,sec
+	 	   
+	 read(string(69:80),'(f12.9)')clkoffset
+	  if(lflag.eq.1)then
+	  write(*,*)'Power failure (lflag=1) -- skip'
+	  write(LULOG,*)'Power failure (lflag=1) -- skip'
+      endif
+         if(nnsat.gt.12)read(LUFOBS,72)
+     1             (satgroup(i),satnum(i),i=13,min0(24,nnsat))
+     	 if(nnsat.gt.24)read(LUFOBS,72)
+     1             (satgroup(i),satnum(i),i=25,nnsat)
+	  
+       elseif(lflag.eq.4)then
+c        backspace 7
+        read(string,74)lflag,nline
+        do 36 ii=1,nline
+         read(LUFOBS,*)
+  36    continue 
+        goto 89
+       elseif(lflag.eq.2)then        
+        write(strerr,*)'Moving antenna--stop'
+        istop = 103
+        call erstop (istop, strerr, logop, luscrn, lulog)	
+       endif 
+      endif                 
+
+   71 format(5i3,f11.7,i3,i3,12(a1,i2))
+   72 format(32x,12(a1,i2))
+   78 format(26x,i3)
+   74 format(26x,2i3)
+   76 format(54x,i1)
+   79 format(5i3,f11.7,i3,i3,12(a1,i2),f15.12)
+
+
+      j=0
+      
+         do 943 i=1,nnsat
+         if(satgroup(i).ne.'R'.and.satgroup(i).ne.'G' )
+     1   satnum(i)=satnum(i)+300
+         if(satgroup(i).eq.'R')satnum(i)=satnum(i)+100
+  943   continue
+       deltaTK=0.
+
+       if(dabs(sec-60.).le.0.003)deltaTK=60.-sec
+       if(dabs(sec-30.).le.0.003)deltaTK=30.-sec
+       if(dabs(sec).le.0.003)deltaTK=-sec
+       sec=sec+deltaTK
+       if(ofset)deltaTK=-clkoffset
+
+       call datemjd(yy,mm,dd,hh,min,sec,moment)
+
+c     Verify the DATE at first reading
+       if(iv.eq.1.and.ipassv.eq.0.and.IERR(LUFOBP).eq.0)then
+       ipassv=1
+       idate=int(moment-mjd-1.0d0)
+       if(idate.ne.0)
+     1 then
+         write(strerr,*)
+     1     'Please verify the dates in the file "rinex_obs_p" '   
+         istop = 104
+         call erstop (istop, strerr, logop, luscrn, lulog)
+        endif
+       endif
+       if(iv.eq.0.and.ipass.eq.0.)
+     1 then
+        ipass=1
+	idate=int(moment-mjd)
+        if(idate.ne.0)then
+          write(LUSCRN,*)
+     1     'please verify the dates in the file "rinex_obs" '
+          IF(LOGOP) WRITE(LULOG,*)
+     1     'please verify the dates in the file "rinex_obs" '      
+          call exit(5)
+        endif
+       endif
+
+      do 4 iii=1,nnsat
+      pc1(iii)=0.d0
+      pc2(iii)=0.d0
+      col1=0
+      col2=0
+       IF (iv.eq.1 .and.IERR(LUFOBP).eq.0)THEN
+ 888    read(LUFOBP,776)string
+!        if(string.eq.' ')goto 888
+        read(string,73)(valobs(k,iii),k=1,min0(5,nbobsb))
+        if(nbobsb.gt.5)then
+         read(LUFOBP,776)string
+         read(string,73)(valobs(k,iii),k=6,min0(10,nbobsb))
+        endif
+        if(nbobsb.gt.10)then
+         read(LUFOBP,776)string
+         read(string,73)(valobs(k,iii),k=11,min0(15,nbobsb))
+        endif
+        if(colP1b.ne.0)then
+	col1=colP1b
+	frc1='L1P'
+	endif
+        if(colP1b.eq.0.and.colcab.ne.0)then
+	col1=colcab
+	frc1='L1C'
+	endif
+	if(valobs(colp1b,iii).eq.0.and.valobs(colcab,iii).ne.0)then
+        col1=colcab
+	frc1='L1C'
+	endif
+	
+	if(satnum(iii).lt.100)then               ! GPS
+         if(colp2b.ne.0)then
+	 col2=colp2b
+	 frc2='L2P'
+	 endif
+         if(colp2b.eq.0.and.colc2b.ne.0)then
+	 col2=colc2b
+	 frc2='L2C'
+	 endif
+	 if(valobs(colp2b,iii).eq.0.and.valobs(colc2b,iii).ne.0)then
+         col2=colc2b
+	 frc2='L2C'
+	 valobs(colc2b,iii)=0  ! because no P2C2 biases are known presently
+	 endif
+	  	 
+	elseif(satnum(iii).lt.200)     THEN       ! GLONASS
+         if(colc2b.ne.0)then
+	 col2=colc2b
+	 frc2='L2C'
+	 endif	 
+         if(colc2b.eq.0.and.colp2b.ne.0)then
+	 col2=colp2b 
+	 frc2='L2P'
+	 endif	 
+	 if(valobs(colc2b,iii).eq.0.and.valobs(colp2b,iii).ne.0)then
+         col2=colp2b	 
+	 frc2='L2P'
+	 endif
+	 
+	endif 
+
+       ENDIF  ! iv.eq.1
+       
+       IF(iv.eq.0)THEN
+ 887    read(LUFOBS,776)string
+!        if(string.eq.' ')goto 887
+        read(string,73)(valobs(k,iii),k=1,min0(5,nbobsa))
+c	write(6,*)(valobs(k,iii),k=1,min0(5,nbobsa))
+        if(nbobsa.gt.5)then
+         read(LUFOBS,776)string
+         read(string,73)(valobs(k,iii),k=6,min0(10,nbobsa))
+c	write(6,*)(valobs(k,iii),k=6,min0(10,nbobsa))
+        endif
+	if(nbobsa.gt.10)then
+         read(LUFOBS,776)string
+         read(string,73)(valobs(k,iii),k=11,min0(15,nbobsa))
+        endif
+c	write(6,*)(valobs(k,iii),k=6,min0(15,nbobsa))
+       
+        if(colP1a.ne.0)then
+	col1=colP1a
+	FRC1='L1P'
+	endif
+        if(colP1a.eq.0.and.colca.ne.0)then
+	col1=colca	
+	FRC1='L1C'
+	endif
+	if(valobs(colp1a,iii).eq.0.and.valobs(colca,iii).ne.0)then
+        col1=colca
+	FRC1='L1C'
+	endif
+	
+	if(satnum(iii).lt.100)then               ! GPS
+         if(colP2a.ne.0)then
+	 col2=colP2a
+	 FRC2='L2P'
+	 endif
+         if(colP2a.eq.0.and.colc2a.ne.0)then
+	 col2=colc2a
+	 FRC2='L2C'
+	 endif	 
+	 if(valobs(colp2a,iii).eq.0.and.valobs(colc2a,iii).ne.0)then
+         col2=colc2a	 
+	 FRC2='L2C'
+	 valobs(colc2a,iii)=0  ! because no P2C2 biases are known presently
+	 endif
+	 
+	elseif(satnum(iii).lt.200)     THEN                !GLONASS
+         if(colc2a.ne.0)then
+	 col2=colc2a
+	 FRC2='L2C'
+	 endif
+         if(colc2a.eq.0.and.colp2a.ne.0)then
+	 col2=colp2a 
+	 FRC2='L2P'
+	 endif
+	 if(valobs(colc2a,iii).eq.0.and.valobs(colp2a,iii).ne.0)then
+         col2=colp2a	 
+	 FRC2='L2P'
+	 endif
+	 
+        endif		                
+       ENDIF
+        if(col1.ne.0.and.col2.ne.0)then  
+	PC1(iii)=valobs(col1,iii)
+	PC2(iii)=valobs(col2,iii)
+	fr1(iii)=frc1
+	fr2(iii)=frc2
+	endif	
+	
+    4 continue
+
+   73  format(5(f14.3,2x))
+  776  format(a80)
+ 
+      if(iv.eq.0.and.dabs(moment-last).lt.0.1d0/86400.d0)iv=1
+      if(dabs(sec-60.).ge.0.004.and.dabs(sec-30.).ge.0.004.
+     1                          and.dabs(sec-0.).ge.0.004)goto 89
+    
+c     construction of the 13 min vectors 
+      if(ksec.eq.0.and.moment.gt.timestop+ds)goto 100
+      IF(moment.ge.timefirst-ds.and.moment.le.timestop+ds)THEN
+       ksec=ksec+1
+       deltat(ksec)=deltaTK
+	   if(clkoffset.ne.0)deltat(ksec)=-clkoffset
+	   
+c      in order to have the same satellite list at each step
+
+
+       col1=1  ! arbitrary chosen to put the two codes to be used for the P3 combination
+       col2=2
+       
+       if(ipk.eq.1) then
+       do 131 j=1,25
+        p1valobs(j)=0.d0
+        p2valobs(j)=0.d0
+	ff1(j)='OOO'
+	ff2(j)='OOO'
+  131  continue
+   
+       do 132 i=1,nnsat
+        do 1321 j=1,nbsat
+         if(satnum(i).eq.satn(j))then
+           p1valobs(j)=PC1(i)
+           p2valobs(j)=PC2(i)
+	   ff1(j)=fr1(i)
+	   ff2(j)=fr2(i)
+         endif
+ 1321   continue
+ 132   continue
+
+       do 134 j=1,nbsat
+        valobs(col1,j)=p1valobs(j)
+        valobs(col2,j)=p2valobs(j)
+ 134   continue
+      endif  !IF ipk=1
+
+      if(ipk.eq.0)then
+       nbsat=nnsat
+       do 158 i=1,nbsat
+        satn(i)=satnum(i)
+        valobs(col1,i)=pc1(i)
+        valobs(col2,i)=pc2(i)
+	   ff1(i)=fr1(i)
+	   ff2(i)=fr2(i)
+ 158   continue
+       ipk=1
+      endif
+      
+
+c      construction of the vectors 
+       epoch(ksec)=moment
+	
+       do 5 i=1,nbsat	
+        if(valobs(col1,i).ne.0.d0.and.valobs(col2,i).ne.0.d0) then
+c IF GPS:     
+          if(satn(i).lt.100)then
+           if(colP1a.eq.0)valobs(col1,i)=
+     1              valobs(col1,i)+bias(satn(i))*vitlum*1.0d-9
+           if(colP2a.eq.0)valobs(col2,i)=
+     1              valobs(col2,i)+bias2(satn(i))*vitlum*1.0d-9
+           resquad(ksec,i)=2.54573d0*(valobs(col1,i)-recdelP1)
+     1                    -1.54573d0*(valobs(col2,i)-recdelP2)
+           measiono(ksec,i)=(valobs(col1,i)-recdelP1)-resquad(ksec,i)
+           TRKL(i)=TRKL(i)+1
+           ic(i)=ic(i)+1
+         endif
+	 	
+c IF GLONASS:	 
+         if(satn(i).gt.100.and.satn(i).lt.200)then
+
+          coef1=1.d0/(1.d0- 49.d0/81.d0)
+          coef2=1.d0/(81.d0/49.d0 - 1.d0)
+
+	   
+	   resquad(ksec,i)=coef1*(valobs(col1,i)-recdelP1glo)   
+     1     -coef2*(valobs(col2,i)-recdelP2glo)
+           measiono(ksec,i)=(valobs(col1,i)-recdelP1glo)-resquad(ksec,i)
+           TRKL(i)=TRKL(i)+1
+           ic(i)=ic(i)+1
+         endif
+        endif		
+   5   continue
+
+      ENDIF   
+  
+      
+      if(moment.lt.timestop-ds)goto 89 
+      
+c     we have now a vector  resquad(52) with the midpoints of the quadratic fits.
+c     we have to aaply the following corrections:
+c      - geometric distance 
+c      - ionospheric delay
+c      - tropospheric delay
+c      - sagnac effet 
+c      - relativistic effect
+c      - group delay L1-L2
+c      - receiver delay
+c      - antenna + cables delays
+    
+      do 150 isat=1,nbsat
+
+C      LOOP for complete GPS observations
+       IF(TRKL(isat).eq.26.and.satn(isat).lt.100)
+     1 THEN
+       do 658 jkl=1,3000      
+        if(pprn(jkl).eq.satn(isat).and.
+     1          schtime(isch).le.datenav(jkl).and.
+     2           (datenav(jkl)-schtime(isch)).le.2./24.)
+     2  then
+         djul=datenav(jkl)-44244.D0
+         djul=dmod(djul,7.D0)  
+         toc=djul*86400.D0
+         goto 659
+        endif
+  658  continue    
+       if(jkl.eq.3001)goto 150
+       
+  659  if(brorb(jkl,6,2).ne.0.)goto 150   ! reject unhealthy satellites
+       
+      do 120 ksec=1,26            
+        if(resquad(ksec,isat).ne.0.)
+     1  then
+         iii=0
+         corprev=0.d0
+         djul=epoch(ksec)-44244.D0
+         djul=dmod(djul,7.D0)  
+         trc=djul*86400.D0 
+           
+         IOE=int(brorb(jkl,1,1))
+  54     if(iii.eq.0)tau=resquad(ksec,isat)/vitlum
+         if(iii.eq.1)tau=corrgeom/vitlum
+         ttr=trc-tau
+         call satpos(brorb,Ttr,Trel,X,status,jkl,
+     1         LUSCRN, LULOG, LOGOP)
+
+         alpha=tau*WE
+         xs(1)=x(1)*dcos(alpha)+x(2)*dsin(alpha)
+         xs(2)=-x(1)*dsin(alpha)+x(2)*dcos(alpha)
+         xs(3)=x(3)
+         corrgeom=dsqrt((antpos(1)-Xs(1))**2
+     1    +(antpos(2)-Xs(2))**2+(antpos(3)-Xs(3))**2)
+         if(dabs(corrgeom-corprev).lt.1.0d-5)goto 64
+         corprev=corrgeom
+         iii=1
+         goto 54
+ 64      continue
+           
+c        measured iono (unit= m)
+         iono(ksec)=measiono(ksec,isat) 
+	 
+c        tropo (unit= m)
+         call AZEL(Xs,antpos,Az,El,Stat)
+         call XYZLLA(antpos,lla)
+         mf = 1.d0/(dsin(El)+0.00143d0/(dtan(El)+0.0455d0))
+         if(lla(3).le.1000.)then
+            zpd = 2162.d0 + Ns*(1.-lla(3)/1000.d0) 
+     1       + 0.5d0*DeltaN*(1.-(lla(3)/1000.d0)**2)
+         else	
+  	    zpd = 732.d0 - 8.d0 * (NS+DeltaN)/NSlog *
+     1         (dexp(-NSlog)-dexp(0.125d0*(1.d0-lla(3)/1000.d0)*NSlog))
+         endif
+         tropo(ksec)=mf*zpd/1000.d0         
+c        corrected pseudorange            
+         pcor = resquad(ksec,isat) + trel*vitlum - tropo(ksec)             
+         CR = Pcor-corrgeom
+c        computation of REFSV (unit= 0.1 ns)
+         if(ofset)refsv(ksec)= (CR/vitlum)*1.0d+10 - cabdel + refdel
+         if(.not.ofset)refsv(ksec)= (CR/vitlum)*1.0d+10 
+     1      - cabdel + refdel +deltaT(ksec)*1.0d+10
+           
+c        satellite clock correction (unit= 0.1 ns)
+         tclock=ttr-toc
+         if(tclock.gt.302400.d0)tclock=tclock-604800.d0
+         if(tclock.lt.-302400.d0)tclock=tclock+604800.d0
+         clocksat=(svclk(jkl,1)+svclk(jkl,2)*tclock
+     1        +svclk(jkl,3)*tclock*tclock)*1.0d+10
+
+c        computation of  REFGPS (unit= 0.1 ns)
+         refgps(ksec)=refsv(ksec)+clocksat   
+       else
+        refgps(ksec)=0.
+        refsv(ksec)=0.
+        tropo(ksec)=0.
+        iono(ksec)=0.
+       endif
+c      end of do loop   
+ 120   continue
+       tgd=brorb(jkl,6,3)
+
+c      AZth et ELv at the midpoint of the track
+       corprev=0.
+       iii=0
+       djul=schtime(isch)-30./86400.+6.5/24./60.-44244.0
+     1        +dble(leapsec)/86400.
+       djul=dmod(djul,7.D0)  
+       trc=djul*86400.D0
+  53   if(iii.eq.0)tau=resquad(13,isat)/vitlum
+       if(iii.eq.1)tau=corrgeom/vitlum
+           ttr=trc-tau
+       call satpos(brorb,Ttr,Trel,X,status,jkl,
+     1         LUSCRN, LULOG, LOGOP)        
+       alpha=tau*WE
+       xs(1)=x(1)*dcos(alpha)+x(2)*dsin(alpha)
+       xs(2)=-x(1)*dsin(alpha)+x(2)*dcos(alpha)
+       xs(3)=x(3)
+       corrgeom=dsqrt((antpos(1)-Xs(1))**2
+     1          +(antpos(2)-Xs(2))**2+(antpos(3)-Xs(3))**2)
+       if(dabs(corrgeom-corprev).lt.1.0d-5)goto 63
+       corprev=corrgeom
+       iii=1
+       goto 53
+ 63    continue
+       call AZEL(Xs,antpos,Az,El,Stat)
+       el=el/pi*1800.d0
+       az=az/pi*1800.d0
+       elv=nint(el)
+       azth=nint(az) 
+c      linear fits
+       call fitlin(epoch,refsv,refsvmil,srsv,stdv)
+       call fitlin(epoch,refgps,refgpsmil,srgps,dsg)
+       call fitlin(epoch,tropo,mdtr,smdt,stdv)
+       call fitlin(epoch,iono,mdio,smdi,isg)
+
+c      iono and tropo in 0.1 ns
+       mdtr=mdtr/vitlum*1.0d+10
+       mdio=(mdio/vitlum- tgd)*1.0d+10
+       isg=isg/vitlum*1.0d+10
+      
+c      drifts in  0.1ps/s
+       srsv=srsv*1000.d0/86400.d0
+       srgps=srgps*1000.d0/86400.d0
+       smdt=smdt/vitlum*1.0d+10 *1000.d0 /86400.d0
+       smdi=smdi/vitlum*1.0d+10 *1000.d0 /86400.d0     
+
+       class='FF'
+       frc1=ff1(isat)
+       frc2=ff2(isat)
+       
+               
+c      writing of results241
+  154  trkl(isat)=trkl(isat)*30
+       secsch=0
+       mjdtrk=int(mjd)
+       ick=0
+       if(schmin(isch).gt.48.and.schh(isch).gt.23)mjdtrk=int(mjd)-1
+       write(name,104)satn(isat),class,mjdtrk,schh(isch),
+     1  schmin(isch),secsch,trkl(isat),elv,azth,nint(refsvmil),
+     2  nint(srsv),nint(refgpsmil),nint(srgps),nint(dsg),
+     3  ioe,nint(mdtr),nint(smdt),nint(mdio),nint(smdi),
+     4  nint(mdio),nint(smdi),nint(isg),fr,hc,frc,frc1,frc2
+
+        do 656 kk=1,125
+          ick=ick+ichar(name(kk:kk))
+ 656    continue
+        ck=mod(ick,256)
+
+        write(LUOUT,103)satn(isat),class,mjdtrk,schh(isch),
+     1  schmin(isch),secsch,trkl(isat),elv,azth,nint(refsvmil),
+     1  nint(srsv),nint(refgpsmil),nint(srgps),nint(dsg),
+     1  ioe,nint(mdtr),nint(smdt),nint(mdio),nint(smdi),
+     1  nint(mdio),nint(smdi),nint(isg),fr,hc,frc,ck,frc1,frc2
+        write(LUMOUT,103)satn(isat),class,mjdtrk,schh(isch),
+     1  schmin(isch),secsch,trkl(isat),elv,azth,nint(refsvmil),
+     1  nint(srsv),nint(refgpsmil),nint(srgps),nint(dsg),
+     1  ioe,nint(mdtr),nint(smdt),nint(mdio),nint(smdi),
+     1  nint(mdio),nint(smdi),nint(isg),fr,hc,frc,ck,frc1,frc2
+     
+        itestGPS=itestGPS+1
+     
+
+  101 format('PRN',1x,'CL',2x,'MJD',2x,'STTIME',1x,'TRKL',1x,
+     1 'ELV',1x,'AZTH',3x,'REFSV',6x,'SRSV',5x,'REFSYS',4x,'SRSYS',
+     2  2x,'DSG ','IOE ','MDTR ','SMDT ','MDIO ',
+     3 'SMDI MSIO SMSI ISG FR HC FRC CK PS1 PS2')
+  102 format(13x,'hhmmss',2x,'s',2x,'.1dg ','.1dg',4x,'.1ns',5x,
+     1  '.1ps/s',5x,'.1ns',4x,'.1ps/s ','.1ns',
+     2  5x,'.1ns.1ps/s.1ns.1ps/s.1ns.1ps/s.1ns')
+ 104  format(1x,i2,1x,a2,1x,i5,1x,3i2.2,1x,i4,1x,i3,1x,i4,sp,1x,i11,
+     1   1x,i6,ss,1x,i11,sp,1x,i6,1x,ss,i4,1x,i3,1x,i4,1x,
+     2   sp,i4,ss,1x,i4,1x,sp,i4,ss,1x,i4,1x,i4,1x,i3,1x,i2,
+     3  1x,i2,1x,a3,1x,a3,1x,a3,1x)    
+ 103  format(1x,i2,1x,a2,1x,i5,1x,3i2.2,1x,i4,1x,i3,1x,i4,sp,1x,i11,
+     1   1x,i6,ss,1x,i11,sp,1x,i6,1x,ss,i4,1x,i3,1x,i4,1x,
+     2   sp,i4,ss,1x,i4,1x,sp,i4,ss,1x,i4,1x,i4,1x,i3,1x,i2,
+     3  1x,i2,1x,a3,1x,z2,1x,a3,1x,a3)    
+
+      ENDIF  
+C     FIN BOUCLE GPS	  
+	  
+  
+C     GLONASS DATA  TREATMENT (RungeKutta4th order integration of coordinates
+C     AH 28/07/2010
+C     BOUCLE GLONASS
+C     ====================================================
+      IF(TRKL(isat).eq.26.and.satn(isat).gt.100.and.
+     1    satn(isat).lt.200)THEN
+	   
+  661     do 121 ksec=1,26 
+            if(resquad(ksec,isat).ne.0.)
+     1      then
+            iii=0
+            corprev=0.d0
+            djul=epoch(ksec)-44244.D0
+            djul=dmod(djul,7.D0)  
+            trc=djul*86400.D0
+ 
+ 1558       if(iii.eq.0)tau=resquad(ksec,isat)/vitlum
+            if(iii.eq.1)tau=corrgeom/vitlum
+            ttr=trc-tau
+	    
+c        Calcul of Xs and vit by R.Kutta integration
+            call integ(nbeph,ttr,tocglo,sp3,v,g,tau,Xs,
+     1      satn(isat)-100,vit,iii,exists,LULOG,jkl)  
+            if(health(jkl,satn(isat)-100).ne.0.)goto 150
+            if(.not.exists)goto 150     
+
+            corrgeom=dsqrt((antpos(1)-Xs(1))**2
+     1       +(antpos(2)-Xs(2))**2+(antpos(3)-Xs(3))**2)
+            if(dabs(corrgeom-corprev).lt.1.0d-5)goto 164
+            corprev=corrgeom
+            iii=1
+            goto 1558
+ 164        continue
+	 
+C       measured iono (unit= m)
+            iono(ksec)=measiono(ksec,isat)
+	 
+C         Trel (unit= s)
+		trel=-(2./(vitlum*vitlum))*
+     1      (vit(1)*Xs(1)+vit(2)*Xs(2)+vit(3)*Xs(3))
+	 
+C        tropo (unit= m)
+            call AZEL(Xs,antpos,Az,El,Stat)
+            call XYZLLA(antpos,lla)
+            mf = 1.d0/(dsin(El)+0.00143d0/(dtan(El)+0.0455d0))
+            if(lla(3).le.1000.)then
+               zpd = 2162.d0 + Ns*(1.-lla(3)/1000.d0) 
+     1         + 0.5d0*DeltaN*(1.-(lla(3)/1000.d0)**2)
+              else	
+  	      zpd = 732.d0 - 8.d0 * (NS+DeltaN)/NSlog *
+     1        (dexp(-NSlog)-dexp(0.125d0*(1.d0-lla(3)/1000.d0)*NSlog))
+            endif
+            tropo(ksec)=mf*zpd/1000.d0      
+
+c        corrected pseudorange            
+            pcor = resquad(ksec,isat) + trel*1.D0*vitlum - tropo(ksec)      
+            CR = Pcor-corrgeom
+		 
+c        computation of REFSV (unit= 0.1 ns)
+         if(ofset)refsv(ksec)= (CR/vitlum)*1.0d+10 - cabdel + refdel
+           if(.not.ofset)refsv(ksec)= (CR/vitlum)*1.0d+10 
+     1           - cabdel + refdel  +deltaT(ksec)*1.0d+10
+ 
+C        satellite clock correction (unit= 0.1 ns)
+             djul=datenavglo(jkl)-44244.D0
+            djul=dmod(djul,7.D0)
+            tocg=djul*86400.D0
+           tclock=ttr-tocg
+           if(tclock.gt.302400.d0)tclock=tclock-604800.d0
+           if(tclock.lt.-302400.d0)tclock=tclock+604800.d0
+           clocksat=(-clock(jkl,satn(isat)-100,1)-
+     1     clock(jkl,satn(isat)-100,2)*tclock)*1.0d+10
+
+c        computation of  REFGPS (unit= 0.1 ns)
+           refgps(ksec)=refsv(ksec)+clocksat 		
+
+          else
+           refgps(ksec)=0.
+           refsv(ksec)=0.
+           tropo(ksec)=0.
+           iono(ksec)=0.
+           az=0
+           el=0
+          endif
+c      end of do loop   
+ 121   continue
+	    		 
+c      AZth et ELv at the midpoint of the track
+       corprev=0.
+       iii=0
+       djul=schtime(isch)-30./86400.+6.5/24./60.-44244.0
+     1        +dble(leapsec)/86400.
+       djul=dmod(djul,7.D0)  
+       trc=djul*86400.D0
+  753  if(iii.eq.0)tau=resquad(13,isat)/vitlum
+       if(iii.eq.1)tau=corrgeom/vitlum
+        ttr=trc-tau
+	call integ(nbeph,ttr,tocglo,sp3,v,g,tau,Xs,
+     1 satn(isat)-100,vit,iii,exists,LULOG,jkl)    
+        if(.not.exists)cycle    
+       corrgeom=dsqrt((antpos(1)-Xs(1))**2
+     1          +(antpos(2)-Xs(2))**2+(antpos(3)-Xs(3))**2)
+       if(dabs(corrgeom-corprev).lt.1.0d-5)goto 763
+       corprev=corrgeom
+       iii=1
+       goto 753
+ 763    continue
+
+       call AZEL(Xs,antpos,Az,El,Stat)
+       el=el/pi*1800.d0
+       az=az/pi*1800.d0
+       elv=nint(el)
+       azth=nint(az)
+c      linear fits
+       call fitlin(epoch,refsv,refsvmil,srsv,stdv)
+       call fitlin(epoch,refgps,refgpsmil,srgps,dsg)
+       call fitlin(epoch,tropo,mdtr,smdt,stdv)
+       call fitlin(epoch,iono,mdio,smdi,isg)
+c      iono and tropo in 0.1 ns
+       mdtr=mdtr/vitlum*1.0d+10
+       mdio=(mdio/vitlum- tgd)*1.0d+10
+       isg=isg/vitlum*1.0d+10
+      
+c      drifts in  0.1ps/s
+       srsv=srsv*1000.d0/86400.d0
+       srgps=srgps*1000.d0/86400.d0
+       smdt=smdt/vitlum*1.0d+10 *1000.d0 /86400.d0
+       smdi=smdi/vitlum*1.0d+10 *1000.d0 /86400.d0     
+
+       class='FF'
+       frc1=ff1(isat)
+       frc2=ff2(isat)
+       ioe=0
+               
+c      writing of results241
+  754  trkl(isat)=trkl(isat)*30
+       secsch=0
+       mjdtrk=int(mjd)
+       ick=0
+       if(schmin(isch).gt.48.and.schh(isch).gt.23)mjdtrk=int(mjd)-1
+       write(name,204)satn(isat),class,mjdtrk,schh(isch),
+     1  schmin(isch),secsch,trkl(isat),elv,azth,nint(refsvmil),
+     2  nint(srsv),nint(refgpsmil),nint(srgps),nint(dsg),
+     3  ioe,nint(mdtr),nint(smdt),nint(mdio),nint(smdi),
+     4  nint(mdio),nint(smdi),nint(isg),fr,hc,frc,frc1,frc2
+
+        do 756 kk=1,125
+          ick=ick+ichar(name(kk:kk))
+ 756    continue
+        ck=mod(ick,256)
+
+        write(LUGOUT,203)satn(isat),class,mjdtrk,schh(isch),
+     1  schmin(isch),secsch,trkl(isat),elv,azth,nint(refsvmil),
+     1  nint(srsv),nint(refgpsmil),nint(srgps),nint(dsg),
+     1  ioe,nint(mdtr),nint(smdt),nint(mdio),nint(smdi),
+     1  nint(mdio),nint(smdi),nint(isg),fr,hc,frc,ck,frc1,frc2
+        write(LUMOUT,203)satn(isat),class,mjdtrk,schh(isch),
+     1  schmin(isch),secsch,trkl(isat),elv,azth,nint(refsvmil),
+     1  nint(srsv),nint(refgpsmil),nint(srgps),nint(dsg),
+     1  ioe,nint(mdtr),nint(smdt),nint(mdio),nint(smdi),
+     1  nint(mdio),nint(smdi),nint(isg),fr,hc,frc,ck,frc1,frc2
+
+       itestGLO=itestGLO+1
+     
+  201 format('PRN',1x,'CL',2x,'MJD',2x,'STTIME',1x,'TRKL',1x,
+     1 'ELV',1x,'AZTH',3x,'REFSV',6x,'SRSV',5x,'REFSYS',4x,'SRSYS',
+     2  2x,'DSG ','IOE ','MDTR ','SMDT ','MDIO ',
+     3 'SMDI MSIO SMSI ISG FR HC CK PS1 PS2')
+  202 format(13x,'hhmmss',2x,'s',2x,'.1dg ','.1dg',4x,'.1ns',5x,
+     1  '.1ps/s',5x,'.1ns',4x,'.1ps/s ','.1ns',
+     2  5x,'.1ns.1ps/s.1ns.1ps/s.1ns.1ps/s.1ns')
+ 204  format(1x,i2,1x,a2,1x,i5,1x,3i2.2,1x,i4,1x,i3,1x,i4,sp,1x,i11,
+     1   1x,i6,ss,1x,i11,sp,1x,i6,1x,ss,i4,1x,i3,1x,i4,1x,
+     2   sp,i4,ss,1x,i4,1x,sp,i4,ss,1x,i4,1x,i4,1x,i3,1x,i2,
+     3  1x,i2,1x,a3,1x,a3,1x,a3,1x)    
+ 203  format(i3,1x,a2,1x,i5,1x,3i2.2,1x,i4,1x,i3,1x,i4,sp,1x,i11,
+     1   1x,i6,ss,1x,i11,sp,1x,i6,1x,ss,i4,1x,i3,1x,i4,1x,
+     2   sp,i4,ss,1x,i4,1x,sp,i4,ss,1x,i4,1x,i4,1x,i3,1x,i2,
+     3  1x,i2,1x,a3,1x,z2,1x,a3,1x,a3) 
+     
+      ENDIF 
+  150 continue
+  
+  100 continue
+  
+ 1000 continue
+      write(6,*)'testgps',itestgps,'testglo',itestglo
+      
+      WRITE(LUSCRN,*) ' Program executed successfully.'
+      IF(LOGOP) WRITE(LULOG,*) ' Program executed successfully.'
+
+c     close all files
+      LUFIL = LUPARA
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+
+      if(itestGPS.ne.0)then
+      LUFIL = LUOUT 
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+      else
+      close(LUOUT,status='delete')
+      endif
+
+      if(itestGLO.ne.0)then
+      LUFIL = LUGOUT 
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+      else
+      close(LUGOUT,status='delete')
+      endif
+
+      if(itestGLO.ne.0.and.itestGPS.ne.0)then
+      LUFIL = LUMOUT 
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+      else
+      close(LUMOUT,status='delete')
+      endif
+
+      LUFIL = LULOG 
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+
+      LUFIL = LUINP 
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+
+      LUFIL = LUFOBS
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+
+      LUFIL = LUFOBP 
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+
+      LUFIL = LUNAV 
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+
+      LUFIL = LUNAVP
+            CALL CLFIL
+     1    (LUFIL, LUSCRN, LULOG, IERR(LUFIL), LOGOP)
+
+
+c     stop the program
+c     normal stop when no errors were detected
+      stop 
+
+      END
+     
+c     ********************************
+
+      subroutine satpos
+     1   (brorb, Ttr, Trel, X, status, jkl, LUSCRN, LULOG, LOGOP)
+
+C       brorb : broadcast ephemeris
+C       Ttr : satellite GPS time
+C       Trel: relativistic correction term
+C       X   : satellite position
+
+      real*8 brorb(3000,7,4),X(3)
+      real*8 Ttr,Trel,M0, dn, ec, A, W0, i0, w, Wdot,
+     |       Cuc, Cus, Crc, Crs, Cic, Cis, Toe, Idot,
+     |       T, n0, n, M, E, Eold, snu, cnu, nu, phi, 
+     |       du, dr, di, u, r, i, Xdash, Ydash, Wc,pi,mu,Wedot,F
+      
+      logical status, LOGOP      
+      integer it
+      integer*4
+     1  LUSCRN, LULOG
+
+      data pi/3.1415926535898d0/,mu/3.986005d+14/,
+     |       Wedot/7.2921151467d-5/,F/-4.442807633d-10/
+
+C     for RINEX files
+
+      M0  = brorb(jkl,1,4)
+      dn  = brorb(jkl,1,3)
+      W0  = brorb(jkl,3,3)
+      i0  = brorb(jkl,4,1)
+      w   = brorb(jkl,4,3)
+      Wdot= brorb(jkl,4,4)
+      idot= brorb(jkl,5,1) 
+
+C     **************
+       
+      Crs = brorb(jkl,1,2)
+      Cuc = brorb(jkl,2,1)
+      ec  = brorb(jkl,2,2)
+      Cus = brorb(jkl,2,3)
+      A   = brorb(jkl,2,4)*brorb(jkl,2,4)    
+      Toe = brorb(jkl,3,1)
+      Cic = brorb(jkl,3,2)
+      Cis = brorb(jkl,3,4)
+      Crc = brorb(jkl,4,2) 
+      
+      status=.true.
+      it=0
+       
+      T= Ttr - Toe
+      
+      if (T.gt.302400.d0)  T = T - 604800.d0
+      if (T.lt.-302400.d0)  T = T + 604800.d0
+      n0 = dsqrt(mu / (A*A*A))
+      n = n0 + dn
+      M = M0 + n*T
+      E = M 
+
+   10 it=it+1
+      Eold = E
+      E = M + ec * dsin(E)
+      if ((it.eq.10).or.(dabs(E - Eold).le.(1.0d-8))) goto 12
+      goto 10
+   12 if (it.eq.10)
+     1then
+        status = .false. 
+        write(LUSCRN,*)'no convergence for E'
+        if(LOGOP) write(LULOG,*)'no convergence for E'
+        goto 15
+      endif     
+      snu = dsqrt(1.d0 - ec*ec) * dsin(E) / (1.d0 - ec*dcos(E))
+      cnu = (dcos(E) - ec) / (1.d0 - ec*dcos(E))
+      nu=datan2(snu,cnu)
+      
+      phi = nu + w
+
+      du = Cuc*dcos(2.d0*phi) + Cus*dsin(2.d0*phi)
+      dr = Crc*dcos(2.d0*phi) + Crs*dsin(2.d0*phi)
+      di = Cic*dcos(2.d0*phi) + Cis*dsin(2.d0*phi)
+      
+      u = phi + du
+      r = A*(1.d0 - ec*dcos(E)) + dr
+      i = i0 + idot*T +di
+
+      Xdash = r*dcos(u)
+      Ydash = r*dsin(u)
+     
+
+      Wc= W0 + (Wdot - Wedot)*T - Wedot*Toe
+                        
+      X(1) = Xdash*dcos(Wc) - Ydash*dcos(i)*dsin(Wc)
+      X(2) = Xdash*dsin(Wc) + Ydash*dcos(i)*dcos(Wc)
+      X(3) = Ydash*dsin(i)
+
+C     relativistic correction term
+      Trel = F * ec * brorb(jkl,2,4) * dsin(E) 
+
+   15 return 
+      end
+
+c     ********************************
+
+      subroutine AZEL(Xsat,Xrec,Az,El,Stat)
+      
+      logical stat
+      Real*8 dx,dy,dz,s,cosel,lla(3),ax,el,Az,
+     1       pi,xsat(3),xrec(3),range,cmre,cp,cl,sp,sl
+            
+      pi=3.1415926535898d0
+      ax=0.9966472d0 
+      dx=xsat(1)-xrec(1)
+      dy=xsat(2)-xrec(2)
+      dz=xsat(3)-xrec(3)
+      range=dsqrt(dx*dx+dy*dy+dz*dz)
+      cmre=dsqrt(xrec(1)*xrec(1)+xrec(2)*xrec(2)+xrec(3)*xrec(3))
+      
+      cosel=(dx*xrec(1)+dy*xrec(2)+dz*xrec(3))/(cmre*range) 
+      if(cosel.lt.0.d0)
+     1then
+       el=0.
+       else
+       el=pi/2.d0-dacos(cosel)
+      endif
+      
+      call XYZLLA(xrec,lla)
+      cp=dcos(lla(1))
+      cl=dcos(lla(2))
+      sp=dsin(lla(1))
+      sl=dsin(lla(2))
+      az=datan2((-dx*sl+dy*cl),(-dx*sp*cl-dy*sp*sl+dz*cp*ax))
+      if(az.lt.0.d0)az=az+2.d0*pi
+    
+      return
+      end
+
+c     ********************************
+
+      subroutine XYZLLA(xi,lla)
+      
+      implicit real*8(d)
+      
+      real*8 xi(3),lla(3),p,t,st,ct,rn,a,b,pi
+      
+      pi=3.1415926535898d0 
+      a=6378137.0d0
+      da=a
+      df=0.00335281066d0
+      dx=xi(1)
+      dy=xi(2)
+      dz=xi(3)
+      DA2=a*a                                                           
+      DB=DA*(1.D0-DF)                                                     
+      DE=DSQRT((DA2-DB*DB)/DA2)                                           
+      DE2=DE*DE                                                           
+      DL=(DATAN(DY/DX))                                              
+      IF(DL)6,3,3                                                         
+    3 IF(DX)5,8,8                                                         
+    5 DL=DL+pi                                                        
+      GO TO 8                                                             
+    6 IF(DX)5,8,7                                                         
+    7 DL=DL+2.*pi                                                        
+    8 DXY=DSQRT(DX**2+DY**2)                                              
+      DP=DATAN(DZ/DXY)                                                    
+      L=1                                                                 
+   10 DN=DA/DSQRT(1.D0-(DE*DSIN(DP))**2)                                  
+      GO TO (11,20),L                                                     
+   11 DZP=DZ+DE2*DN*DSIN(DP)                                              
+      DPH=DATAN(DZP/DXY)                                                  
+      DRES=DABS(DP-DPH)                                    
+      IF(DRES.LT.0.0001D0)GO TO 15                                        
+      DP=DPH                                                              
+      GO TO 10                                                            
+   15 L=2                                                                 
+      DCP=DCOS(DPH)                                                       
+      DCL=DCOS(DL)                                                   
+      GO TO 10                                                            
+   20 DH=(DX/(DCP*DCL))-DN  
+      lla(1)=dph
+      lla(2)=dl
+      lla(3)=dh                                              
+      RETURN                                                              
+      END                    
+
+
+c     ********************************
+
+      subroutine fitlin (time,vect,valmil,deriv,stdv)
+      
+      real*8 vect(26),valmil,deriv,stdv,abscisse,time(26),
+     1    s,sx,sxx,sy,sxy,delta,a,b,ord,cal,estim,tmil,t1
+      common/leap/leapsec
+
+      stdv=0.d0
+      s=0.d0
+      sx=0.d0
+      sxy=0.d0
+      sxx=0.d0
+      sy=0.d0
+      cal=1.0d3
+      tmil=time(1)+6.5d0/60.d0/24.d0
+     1       -30.d0/86400.d0+dble(leapsec)/86400.d0
+      t1=time(1)
+      do 15 j=1,26
+        abscisse = time(j)-t1
+        if(vect(j).ne.0.d0)
+     1  then
+         ord=(vect(j)-vect(1))/cal
+         s = s+ 1.0d0
+         sx = sx + abscisse
+         sxx = sxx +  abscisse * abscisse
+         sy = sy + ord
+         sxy = sxy + ord * abscisse
+        endif
+  15  continue
+      if( s .gt. 1.d0 )
+     1then
+        delta = (sxx * s) - (sx * sx)
+        A = ((sy * sxx) - (sx * sxy)) / delta
+        B = ((s * sxy) - (sx * sy)) / delta
+      else
+        A = 98.0d0
+        B = 98.0d0
+      endif
+      
+      if(A.ne.98.0d0)
+     1then      
+        valmil=(a+b*(tmil-t1))*cal + vect(1)
+        deriv=B*cal
+        stdv=0.
+        do 20 j=1,26
+          estim=(a+b*(time(j)-t1))*cal+ vect(1)
+          stdv=stdv+(vect(j)-estim)**2
+  20    continue
+        stdv=dsqrt(stdv/(s-2.))
+      else
+        valmil=9999999
+        deriv=99999999
+        stdv=9999999
+      endif      
+      
+      return
+      end
+
+c     ********************************
+
+      subroutine datemjd ( IAN, MO, JO, hh,min,sec, dpeju )
+c     output : dpeju = mean julian day
+
+      IMPLICIT REAL*8( d )
+      REAL*8 sec
+      integer hh, NJAO( 12 ), NJAB( 12 ), NJAR( 12 )
+      
+      DATA NJAO /0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334/
+      DATA NJAB /0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335/
+      DATA NJAR /0, 31, 59, 90, 120, 151, 181, 212, 243, 263, 294, 324/
+      
+      NOPT=1     
+      dfj= (hh + dble(min)/60. + sec/3600.) / 24.
+      ian=ian+2000
+
+    1 I1  =  IAN
+      IF ( MO .LE. 2 ) I1  =  IAN - 1
+
+      I2  =  MO  +  1
+      IF ( MO .LE. 2 ) I2  =  MO  +  13
+
+      D1 = JO + DFJ
+
+      IF ( I1 .GE. 0 ) IF ( IAN - 1582 ) 2, 3, 5
+
+c     ante christum natum date
+      DPEJU =   dINT( 365.25*dble(I1) - 0.75 ) 
+     *        + dINT( 30.6001*dble(I2) )+ D1 + 1720994.5
+     *         -2400000.5d0
+      RETURN
+
+c     date in the julian calendar ( -> 4 oct. 1582 )
+    2 DPEJU = dINT( 365.25*dble(I1) ) 
+     *  + dINT( 30.6001*dble(I2) ) + D1 + 1720994.5
+     *        -2400000.5d0
+      RETURN
+
+c     date in 1582 
+    3 IF ( MO - 10 ) 2, 4, 5
+     
+c     date in oct 1582
+    4 IF ( NOPT .EQ. 2 ) GO TO 6
+c     date in oct 1582 ( yyyy, mm, dd )
+      IF ( JO .LT. 15 ) GO TO 2
+
+c     date in the gregorian calendar ( 15 oct 1582 -> )
+    5 DPEJU = dINT( 365.25*dble(I1) ) + dINT( 30.6001*dble(I2) ) 
+     *         + D1 + 1720994.5 + dble(2-I1/100 + I1/400)
+     *        -2400000.5d0
+      RETURN
+
+c     date in oct 1582 ( yyyy, ddd )
+    6 continue
+
+      END
+      
+
+c     *****************************************************************
+c     Subroutine for calculatin MJD values
+c     *****************************************************************
+      subroutine decal(mjd,mjddep,he,mi,schh,schmin)
+      
+      integer hdecal,schmin,schh,he,mi,t0,tt
+      real*8 mjd,mjddep
+      
+      t0=he*60+mi
+      tt=t0-4*int(mjd-mjddep)
+      do 15 while (tt.lt.0)
+        tt=tt+1436
+  15  continue
+      schh= int(tt/60)
+      schmin=mod(tt,60)
+     
+      return
+      end
+
+c     *****************************************************************
+c     Subroutine for handling the time
+c     *****************************************************************
+      subroutine classement(schh,schm,schtime,nn)
+      
+      real*8 schtime(nn),provt(nn)
+      integer schh(nn),schm(nn),provh(nn),provm(nn)
+      
+      ndep=1
+      do 1000 i=2,nn
+       if(schtime(i).lt.schtime(ndep)) ndep=i
+ 1000 continue
+  
+      do 1100 i=1,nn-ndep+1
+        provt(i)=schtime(ndep+i-1)
+        provh(i)=schh(ndep+i-1)
+        provm(i)=schm(ndep+i-1)
+ 1100 continue
+
+      do 1200 i=nn-ndep+2,nn
+        provt(i)=schtime(i-(nn-ndep+1))
+        provh(i)=schh(i-(nn-ndep+1))
+        provm(i)=schm(i-(nn-ndep+1))
+ 1200 continue
+    
+      do 1300 i=1,nn
+        schtime(i)=provt(i)
+        schh(i)=provh(i)
+        schm(i)=provm(i)
+ 1300 continue
+
+      return
+      end
+
+c     *****************************************************************
+c       Subroutine to create the header of the CGGTTS file
+c     *****************************************************************
+      subroutine HEADER(sversion,itestc1,lengC1P1,dateC1P1)
+
+c     only for Z-XII3T receivers?            
+c            IMPLICIT NONE 
+
+      INTEGER*4
+     1    LUOUT,LUGOUT, ICK, K, I   
+
+      real*8 antpos(3),recdelP1,recdelP2,cabdel,refdel,m_ns,recdelP1glo,
+     1 recdelP2glo
+      integer ck,ch
+      character*30 LAB,REF,RCVR,REVDATE,COMMENTS,FRAME
+      character*80 abstxt
+      character*3 sversion
+      character*7 lengC1P1
+      character*20 dateC1P1
+     
+c     common/head/ LAB,REF,RCVR,REVDATE,COMMENTS,antpos,
+      common/headint/ ch, LUOUT, LUGOUT, LUMOUT
+      common/headrel8/ antpos, recdelP1,recdelP2,cabdel,refdel,
+     1 recdelP1glo,recdelP2glo
+      common/headchar/ LAB,REF,RCVR,REVDATE,COMMENTS,FRAME
+      common/leap/leapsec
+             
+      m_ns=299792458.0d0*1.0d-9
+         
+      write(LUOUT,612)
+      write(LUOUT,613)revdate
+      write(LUOUT,614)rcvr,sversion
+      if(itestC1.eq.0)write(LUOUT,615)ch
+      if(itestC1.eq.1)write(LUOUT,6155)ch,lengC1P1,dateC1P1
+      write(LUOUT,616)rcvr
+      write(LUOUT,601)LAB
+      write(LUOUT,602)antpos(1)
+      write(LUOUT,603)antpos(2)
+      write(LUOUT,604)antpos(3)
+      write(LUOUT,610)
+      write(LUOUT,611)comments
+      write(LUOUT,605)recdelP1/m_ns,recdelP2/m_ns
+      write(LUOUT,606)cabdel/10.0d0
+      write(LUOUT,607)refdel/10.0d0
+      write(LUOUT,608)REF
+	  
+      write(LUGOUT,612)
+      write(LUGOUT,613)revdate
+      write(LUGOUT,614)rcvr,sversion
+      write(LUGOUT,615)ch
+      write(LUGOUT,616)rcvr
+      write(LUGOUT,601)LAB
+      write(LUGOUT,602)antpos(1)
+      write(LUGOUT,603)antpos(2)
+      write(LUGOUT,604)antpos(3)
+      write(LUGOUT,610)
+      write(LUGOUT,611)comments
+      write(LUGOUT,6055)recdelP1glo/m_ns,recdelP2glo/m_ns
+      write(LUGOUT,606)cabdel/10.0d0
+      write(LUGOUT,607)refdel/10.0d0
+      write(LUGOUT,608)REF
+      
+      write(LUMOUT,612)
+      write(LUMOUT,613)revdate
+      write(LUMOUT,614)rcvr,sversion
+      if(itestC1.eq.0)write(LUMOUT,615)ch
+      if(itestC1.eq.1)write(LUMOUT,6155)ch,lengC1P1,dateC1P1
+      write(LUMOUT,616)rcvr
+      write(LUMOUT,601)LAB
+      write(LUMOUT,602)antpos(1)
+      write(LUMOUT,603)antpos(2)
+      write(LUMOUT,604)antpos(3)
+      write(LUMOUT,610)
+      write(LUMOUT,611)comments
+      write(LUMOUT,605)recdelP1/m_ns,recdelP2/m_ns
+      write(LUMOUT,6055)recdelP1glo/m_ns,recdelP2glo/m_ns     
+      write(LUMOUT,606)cabdel/10.0d0
+      write(LUMOUT,607)refdel/10.0d0
+      write(LUMOUT,608)REF
+      
+      
+ 612  format('CGGTTS GPS/GLONASS DATA FORMAT VERSION = 02')
+ 613  format('REV DATE = ',a30)
+ 614  format('RCVR = ',a30,'R2CGGTTS v',a)
+ 615  format('CH = ',i2,' (GPS)')
+ 6155 format('CH = ',i2,' (GPS)          ','C1P1bias: ',a7,2x,a20)
+ 616  format('IMS = ',A30)
+ 601  format('LAB = ',A30)
+ 602  format('X =',sp,f12.2,' m (GPS)')
+ 603  format('Y =',sp,f12.2,' m (GPS)')
+ 604  format('Z =',sp,f12.2,' m (GPS)')
+ 605  format('INT DLY = ',f6.1,' ns (GPS P1), ',f6.1,' ns (GPS P2)')
+ 6055 format
+     1('INT DLY = ',f6.1,' ns (GLONASS P1), ',f6.1,' ns (GLONASS P2)')
+ 606  format('CAB DLY = ',f6.1,' ns (GPS)')
+ 607  format('REF DLY = ',f6.1,' ns')
+ 608  format('REF = ',a30)
+ 609  format('CKSUM = ',z2.2)
+ 610  format('FRAME = ITRF, PZ-90->ITRF Dx = 0.0 m, Dy = 0.0 m,',
+     1 ' Dz = 0.0 m, ds = 0.0, Rx = 0.0, Ry = 0.0, Rz = 0.000000')
+!  610  format('FRAME = ITRF')
+ 611  format('COMMENTS = ',a30)
+ 
+      rewind(LUOUT)
+      ick=0
+      
+      do 1 k=1,15
+        read(LUOUT,20,end=1)abstxt
+   20   format(a50)
+        do 15 i=1,50
+          if(abstxt(i:i+30).eq.'   ')
+     1    then
+             goto 1
+          else
+             ick=ick+ichar(abstxt(i:i))
+          endif
+ 15     continue
+ 1    continue
+          
+c     write(abstxt,*)'CKSUM = '
+c     The next assignment to the variable is better otherwise abstxt would contain extra space by using a write
+      abstxt='CKSUM = '
+      do 16 i=1,50
+        if(abstxt(i:i+2).eq.'   ')
+     1  then
+          goto 9
+        else
+c    Per CGGTTS standard we should coult the CKSUM from the G and not from the first C character
+          if(i .NE. 1) then            
+            ick=ick+ichar(abstxt(i:i))
+          endif          
+        endif
+ 16   continue
+ 
+ 9    ick=ick+32
+      ck=mod(ick,256)
+              
+c     Going to the end of the file to assure that data can be written at EOF
+c      endfile(LUOUT)
+c 
+      write(LUOUT,609)ck           
+      write(LUOUT,*)
+      write(LUGOUT,609)ck           
+      write(LUGOUT,*) 
+      write(LUMOUT,609)ck
+      write(LUMOUT,*)      
+      return
+      end
+
+      
+c     *****************************************************************
+c       Subroutine to open a file and perform proper validation for file handling
+c     *****************************************************************
+      subroutine OPFIL
+     1    (LUFIL, LUSCRN, LULOG,  IERR, CHSTAT, LOGOP, NAMFIL)
+
+      IMPLICIT NONE
+
+      INTEGER*4
+     1    LUFIL,  LUSCRN, LULOG,  IERR, ISTOP
+
+      CHARACTER*7
+     1   CHSTAT
+
+      CHARACTER*1200
+     1      STRERR
+           
+      LOGICAL
+     1    LOGOP
+             
+      CHARACTER*512
+     1   NAMFIL
+
+c     open file namfil & error trapping
+      OPEN(UNIT=LUFIL, FILE= NAMFIL,
+     1     STATUS= CHSTAT, IOSTAT= IERR)
+     
+c     open file successful?     
+      IF(IERR .NE. 0)THEN         
+         WRITE(6,1000)  LUFIL,  NAMFIL         
+             
+ 1000    FORMAT('WARNING:',
+     1          ' fail to open file unit',I4,':',A512)
+         ISTOP = 106         
+c         CALL erstop (istop, strerr, logop, luscrn, lulog)	 
+      ENDIF
+
+      RETURN
+      END
+
+c     *****************************************************************
+c       Subroutine to CLOSE a file and perform proper validation for file handling
+c     *****************************************************************
+      subroutine CLFIL
+     1     (LUFIL, LUSCRN, LULOG, IERR, LOGOP)
+
+      IMPLICIT NONE
+
+      INTEGER*4
+     1      LUFIL, LUSCRN, LULOG,  IERR, ISTOP
+
+      LOGICAL
+     1      LOGOP
+
+      CHARACTER*1200
+     1     STRERR      
+c     close file lufil
+      
+      CLOSE (UNIT=LUFIL, IOSTAT=IERR)
+
+c     file successfully closed?      
+      IF(IERR .NE. 0)
+     1 THEN
+c        close failed
+         WRITE(STRERR, 1000) LUFIL, IERR
+ 1000    FORMAT('Fail to close unit ',I3,' ierr= ', I3)
+ 
+         ISTOP = 107
+         CALL erstop (istop, strerr, logop, luscrn, lulog)
+      ENDIF
+
+      RETURN
+
+      END
+
+c     *****************************************************************
+c       Subroutine to exit on an error stop passed by the user.
+c     *****************************************************************
+      subroutine erstop (istop, strerr, logop, luscrn, lulog)
+
+      implicit none
+      integer*4 istop, lulog, luscrn
+      CHARACTER*1200 strerr
+      logical logop      
+
+      write(luscrn, 1000) istop, strerr
+      IF(LOGOP) write(LULOG, 1000) istop, strerr
+ 1000 format(' istop',i4,a1200)
+c      exit is not a Standard Fortran function. However with g77 and f77 the function works ok.
+c      If exit is not allowed by your compiler please use stop istop instead 
+      call exit(istop)
+c      stop istop
+      return
+      end
+c     last line of file
+
+c******************************************************************
+
+c     ******************************************************************
+c     Subroutine Runge Kutta 4th Order for Satelitte Orbit integration 
+c     ******************************************************************	
+	
+		 
+C       ttr = tps auquel on doit trouver la position
+C  		delta = tps entre 2 epehmerides
+C 		nbeph = nb epoch avec ephemerides
+C		toc = vecteur date d'ephemerides
+C		sp3 = vecteur des eph.
+c       xs : position (sortie)
+c       vit: vitesse (sortie)
+c******************************************************************
+
+
+        subroutine integ(nbeph,ttr,toc,sp3,v,g,tau,Xs,
+     1   prn,vit,iii,exists,LULOG,jklsave) !toci,sp3i,vi,gi)
+     
+        implicit none
+          real*8 omegae,graveart,c20bis
+	  parameter (omegae=7.2921151467d-5,graveart=398600.44d0)
+	  parameter (c20bis=-1.5d0*1.08263d-3*6378.136d0**2)
+	 
+	  real*8 ttx,tty,ttz,tsc,trx,try,trz,theta
+	  integer prn,nbeph(3),iii,LULOG,i
+	  real*8 epoch,ttr,toc(1000),tau,r2,r3,dt,xs(3),vit(3),temp(3),
+     1   gi(3) 
+	  real*8 sp3(1000,24,3),v(1000,24,3),g(1000,24,3),alpha,dtprev,
+     1   gs(3)
+	  real*8 reste,pas,cinqz2r2
+	  integer nbcycle,jkl,j,jklsave
+	  logical exists
+	  
+	  
+c    Parameters to convert PZ-90 in WGS-84 (from BIPM ) not needed
+c	theta=1.9D-6	 
+c	ttx = 0.d0
+c	tty = 0.d0
+c	ttz = 2.d-3
+c	tsc = 0.d0
+c	trx = 0.d0
+c	try = 0.d0
+c	trz = -2.d-6
+
+        do i=1,3
+	xs(i)=0.d0
+	vit(i)=0.d0
+	gi(i)=0.d0
+	enddo
+
+	dt=99999999
+	dtprev=9999999
+	exists=.false.
+	alpha=tau*omegae
+	 
+        do jkl=1,nbeph(3)
+          dt=ttr-toc(jkl)
+	  pas=10.d0
+          if(abs(dt).gt.1800.d0)cycle
+          if(abs(dt).gt.abs(dtprev))cycle
+
+c    Special case: dt<0, modifications to correct problem with negative number modulo
+          if(dt.lt.0)then
+              reste=-dmod(-dt,pas)
+              pas=-pas
+              nbcycle=ABS((dt-reste)/pas)
+           else
+              reste=dmod(dt,pas)
+              nbcycle=(dt-reste)/pas
+           endif
+
+c    Extract initial parameters (for toc(jkl))
+	  xs(1)=sp3(jkl,prn,1)
+	  xs(2)=sp3(jkl,prn,2)
+	  xs(3)=sp3(jkl,prn,3)
+	  vit(1)=v(jkl,prn,1)
+	  vit(2)=v(jkl,prn,2)
+	  vit(3)=v(jkl,prn,3)
+	  gi(1)=g(jkl,prn,1)
+	  gi(2)=g(jkl,prn,2)
+	  gi(3)=g(jkl,prn,3)
+	  jklsave=jkl
+           if(xs(1)==0..and.xs(2)==0..and.xs(3)==0.) cycle
+ 
+c    Determine initial acceleration parameters
+          call f(xs,vit,gi,gs)	 
+	 
+c    Start integrating data with the step "pas"	 ==> xs,vit
+            do j=1,nbcycle
+	     call kutta(ttr,toc(jkl),xs,vit,gs,gi,pas)
+	
+c    Calcul corresponding acceleration gs from xs, vit and gi	
+	     call f(xs,vit,gi,gs)
+            enddo
+c    Calcul for the last step lower than "pas" value
+		call kutta(ttr,toc(jkl),xs,vit,gs,gi,reste)
+C     Rotation from PZ-90 to WGS-84 (not needed)
+
+c    Correct positions from the earth rotation		 
+	  temp=xs
+	  xs(1)=(temp(1)*dcos(alpha)+temp(2)*dsin(alpha))*1.D3
+	  xs(2)=(-temp(1)*dsin(alpha)+temp(2)*dcos(alpha))*1.D3
+	  xs(3)= temp(3)*1.D3    
+	  temp=vit
+	  vit=vit*1.D3
+         dtprev=dt
+           goto 10
+	   
+	 enddo
+  10   if(xs(1)==0..and.xs(2)==0..and.xs(3)==0.)then
+	exists=.false.
+	write(LULOG,702)prn,ttr
+	else
+	exists=.true.
+	endif
+ 702   format('In BRDC, missing data for glonass satellite ',i3,' on ',
+     1   f10.3,' (in GPS week) -> line skipped')
+
+       end subroutine integ
+	 
+c@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@	 
+      subroutine kutta(ttr,toc,x,v,g,gi,h)
+      implicit none
+      real*8 ttr,toc,h,cinqz2r2,omegae,graveart,c20bis,r2,r3
+      real*8 x(3),v(3),g(3),K(6,4),valu,xc(3),vc(3)
+      real*8 gi(3),temp(3)
+		 
+      parameter (omegae=7.2921151467d-5,graveart=398600.44d0)
+      parameter (c20bis=-1.5d0*1.08263d-3*6378.136d0**2)
+		 
+C     K [x x x x]
+C       [x x x x]
+C       [x x x x]
+C       [x x x x]
+C       [x x x x]
+C       [x x x x]
+		
+C        Definition des constantes d'integration
+        K=0
+
+        K(1:3,1)=h*g
+        K(4:6,1)=h*v
+
+        vc(1)=v(1)+K(1,1)/2.D0
+        vc(2)=v(2)+K(2,1)/2.D0
+        vc(3)=v(3)+K(3,1)/2.D0
+        xc(1)=x(1)+K(4,1)/2.D0
+        xc(2)=x(2)+K(5,1)/2.D0
+        xc(3)=x(3)+K(6,1)/2.D0
+	 
+        call f(xc,vc,gi,g)
+        K(1:3,2)=h*g
+        K(4:6,2)=h*vc
+		
+        vc(1)=v(1)+K(1,2)/2.D0
+        vc(2)=v(2)+K(2,2)/2.D0
+        vc(3)=v(3)+K(3,2)/2.D0
+        xc(1)=x(1)+K(4,2)/2.D0
+        xc(2)=x(2)+K(5,2)/2.D0
+        xc(3)=x(3)+K(6,2)/2.D0
+
+        call f(xc,vc,gi,g)
+        K(1:3,3) =h*g
+        K(4:6,3)=h*vc
+		
+          vc(1)=v(1)+K(1,3)
+          vc(2)=v(2)+K(2,3)
+          vc(3)=v(3)+K(3,3)
+          xc(1)=x(1)+K(4,3)
+          xc(2)=x(2)+K(5,3)
+          xc(3)=x(3)+K(6,3)
+
+         call f(xc,vc,gi,g)
+	     K(1:3,4) =h*g        
+		 K(4:6,4)=h*vc
+		 
+C 		Positions and velocities determined by RK4:
+
+         vc(1)=v(1)+1./6.D0*(K(1,1)+2*K(1,2)+2*K(1,3)+K(1,4))
+         vc(2)=v(2)+1./6.D0*(K(2,1)+2*K(2,2)+2*K(2,3)+K(2,4))
+         vc(3)=v(3)+1./6.D0*(K(3,1)+2*K(3,2)+2*K(3,3)+K(3,4))
+         xc(1)=x(1)+1./6.D0*(K(4,1)+2*K(4,2)+2*K(4,3)+K(4,4))
+         xc(2)=x(2)+1./6.D0*(K(5,1)+2*K(5,2)+2*K(5,3)+K(5,4))
+         xc(3)=x(3)+1./6.D0*(K(6,1)+2*K(6,2)+2*K(6,3)+K(6,4))				  
+         x=xc
+         v=vc 
+         end subroutine kutta
+c@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	
+      subroutine f(x,v,gi,g)
+      real *8 x(3),v(3),c20bis,graveart,omegae,r2,r3,cinqz2r2,
+     1   gi(3),g(3)
+      parameter (omegae=7.2921151467d-5,graveart=398600.44d0)
+      parameter (c20bis=-1.5d0*1.08263d-3*6378.136d0**2) 
+		 
+      r2 = x(1)**2+x(2)**2+x(3)**2
+      r3 = r2*dsqrt(r2)
+      cinqz2r2 = 5.d0*x(3)**2/r2
+
+c       determine acceleration from x,v and g		
+      g(1) =graveart*x(1)*
+     1    (-1.d0+c20bis*(1.d0-cinqz2r2)/r2)/r3
+     1    + omegae*(omegae*x(1)+2.d0*v(2))+gi(1)
+      g(2) = graveart*x(2)*
+     1    (-1.d0+c20bis*(1.d0-cinqz2r2)/r2)/r3
+     1   + omegae*(omegae*x(2)-2.d0*v(1))+gi(2)
+      g(3) = graveart*x(3)*
+     1   (-1.d0+c20bis*(3.d0-cinqz2r2)/r2)/r3+gi(3)
+       end subroutine f
+		 
+c@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@		 
+        subroutine leapscorr(yg,mg,dg,hg,ming,secg,gleap)
+        implicit none
+        integer yg,mg,dg,hg,ming,gleap
+        real*8 secg
+        if(gleap.eq.0)goto 10
+        secg=secg+gleap
+        if(secg.ge.60)then
+           ming=ming+1
+           secg=mod(60.,secg)
+        endif
+        if(ming.ge.60)then
+           hg=hg+1
+           ming=mod(60,ming)
+        endif
+        if(hg.ge.24)then
+           dg=dg+1
+           hg=mod(24,hg)
+        endif
+
+ 10   continue	
+	return
+	     end subroutine leapscorr

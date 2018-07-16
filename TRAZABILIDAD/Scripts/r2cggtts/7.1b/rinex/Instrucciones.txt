@@ -1,0 +1,6 @@
+NOTA: CRINEX_a_RINEX solo es válido para Windows
+
+1. Coloque los archivos con extensión *.??d en el mismo directorio que los
+archivos CRINEX_a_RINEX.bat y crx2rnx.exe
+
+2. Ejecute el programa CRINEX_a_RINEX.bat haciendo doble clic sobre el archivo.

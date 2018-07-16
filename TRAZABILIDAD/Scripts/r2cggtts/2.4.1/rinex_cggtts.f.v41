@@ -1,0 +1,1105 @@
+      program cctf
+      
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c  VERSION 4.1
+c
+c This code generates the CGGTTS files in a MULTI-CHANNEL approach
+c     from RINEX files at a sampling rate of 30 sec.
+c     using broadcast orbits and P3 code
+c
+c the files needed are:
+c    Rinex observation file of the day --> 'rinex_obs'
+c    Rinex observation file of the day after --> 'rinex_obs_p'
+c    Rinex Navigation file of the day --> 'rinex_nav'
+c    Rinex Navigation file of the day after --> 'rinex_nav_p'
+c    coordinates, calibration delays --> 'paramCGGTTS.dat'
+c
+c the soft asks for the mjd of the day to be treated
+c
+c The output is in the file 'CGGTTS.out'
+c    
+c The code has been written by Pascale DEFRAIGNE (p.defraigne@oma.be)
+c
+c	present version (V3.0) : june 2002
+c
+c june 28, 2002
+c version 3.1 : -add the generation of header
+c               -change rinex_nav reading in order to avoid
+c                to stop in case there are data for other days in the file
+c               -read(5,*)mjd rather than yy,mm,dd
+c
+c july 8, 2002
+c version 3.2 : - allow to use observations of which the date is not exactly at
+c                 0 or 30 sec, but 29.999 rather than 30 or 59.999 rather than 0.
+c               - allow reading of empty lines between observations in Rinex file
+c               - change the writing format of header to allow more characters
+c                 for cable and receivers delays
+c
+c september 18, 2002
+c version 3.3 : - add ,fr,hc in the declaration of integer variables
+c               - change the subroutine 'decal' for the schedule time determination
+c               - change  its=2+16*i   into  its=2+16*(i-1)
+c
+c september 15, 2003
+c version 3.4 : -changes w.r.t V3.3: reading of the ephemerides once, 
+c                 rather than at each computation
+c               -add a test to discard the WAAS satellite from the analyses
+c october 26, 2004
+c version 3.5 : -add the possibility to treat data at sec 0.001
+c		-add the line "sec=sec+deltaT(ksec)"
+c		-add a line in order to avoid to consider the first tracks of the day
+c		 when the rinex files begins later in the day:
+c		      if(ksec.eq.0.and.moment.gt.timestop+ds)goto 100
+c               -add the possibility to have different number of observables
+c                for in files rinex_obs and rinex_obs_p
+c april 21, 2005
+c version 3.6 : -change the way to treat the observations at sec 0.001 or xx.999
+c
+c november 3, 2005
+c version 4.0 : -add TGD correction in the MSIO and MDIO values
+c		-change the header in order to include the softawre version, 
+c                  and change the computation of CK in consequence
+c version special NOVATEL : uses C1 measurements and add bias(P1-C1) 
+c april 23, 2006
+c version 4.1 : -change the tropo correction, in order to include altitude dependence
+c
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      
+      integer TRKL(25),yy,mm,dd,hh,min,he,prn,flag(25),
+     1  satnum(25),satn(25),secsch,leapsec,
+     1  colca,colcab,col1,col2,colP1b,colP2b,colP1a,colP2a,
+     1  yn,mn,dn,hn,minn,schsat(100),schsatm(100),
+     2  schh(100),schmin(100),ic(25),ichoice,
+     2  mjdtrk,IOE,ck,elv,azth,ch,fr,hc,pprn(3000)
+     
+      real*8 pi,vitlum,schtime(100),sec,secn,mjd,mjddep,      
+     1  brorb(3000,7,4),corrgeom,corprev,alpha,we,     
+     1  ds,djul,last,trel,tau,     deltatk,tgd,
+     1  antpos(3),x(3),xs(3),lla(3),Az,El,     
+     1  moment,timefirst,timestop,timenav,toc,trc,Ttr,     
+     1  tropo(26),mdtr,smdt,stdv,     
+     1  iono(26),mdio,smdi,measiono(26,25),isg,     
+     1  refsv(26),refsvmil,srsv,refgps(26),refgpsmil,srgps,dsg,     
+     1  resquad(26,25),pcor,cr,clocksat,svclk(3000,3),tclock,      
+     2  recdelP1,recdelP2,refdel,cabdel,deltaT(26),p2valobs(25), 
+     4  epoch(26),valobs(8,25),p1valobs(25),datenav(3000),
+     4  bias(40),NS,DeltaN,mf,zpd,NSlog
+      
+      
+
+       logical status,stat    
+       character*2 obs(9),class,schcl(5000),schclm(5000)
+       character*3 frc
+       character*30 param,REF,LAB,RCVR,REVDATE,COMMENTS
+       character*20 comment
+       character*80 string
+       character*1 satgroup(25)
+       character*125 name
+       data bias / -0.233d0, -0.033d0, -0.163d0,  1.234d0, -0.944d0,
+     +             0.444d0, -1.132d0, -0.416d0,  0.366d0, -1.651d0,
+     +             0.591d0, -9.999d9,  1.529d0,  0.108d0, -1.326d0,
+     +            -0.525d0,  1.391d0, -0.012d0, -2.026d0, -1.228d0,
+     +            -0.392d0,  0.532d0,  0.130d0, -0.069d0,  0.575d0,
+     +             1.083d0, -0.189d0, -0.232d0,  0.643d0,  2.016d0,
+     +            -0.073d0, -9.999d9, -9.999d9, -9.999d9, -9.999d9,
+     +            -9.999d9, -9.999d9, -9.999d9, -9.999d9, -9.999d9  /
+     
+       common/head/ LAB,REF,RCVR,REVDATE,COMMENTS,antpos,
+     1             recdelP1,recdelP2,cabdel,refdel,ch                
+       common/leap/leapsec
+
+       frc='L3P'
+       fr=0
+       hc=0
+
+c tropo parameters       
+       NS=324.8d0
+       DeltaN=-7.32d0*dexp(0.005577d0*Ns)  
+       NSLOG= dlog((NS+DeltaN)/105.d0 )          
+       
+      open(unit=9,file='paramCGGTTS.dat')
+      open(unit=10,file='CGGTTS.out')
+      open(unit=92,file='prt.out')
+      
+      colP1a=0
+      colP2a=0
+      colca=0
+      colP1b=0
+      colP2b=0
+      colcab=0
+      
+      WE=7.292115d-5
+      vitlum=299792458.0d0
+      pi=3.1415926535898d0     
+
+c reading of parameters:
+
+ 989  format(a30)
+      do 1 ipar=1,14
+       read(9,989)param
+       if(param.eq.'REV DATE')then
+        read(9,989)revdate
+       elseif(param.eq.'RCVR')then
+        read(9,989)rcvr
+       elseif(param.eq.'CH')then
+        read(9,*)CH
+       elseif(param.eq.'LAB NAME')then
+        read(9,989)LAB
+       elseif(param.eq.'X COORDINATE')then
+        read(9,*)antpos(1)
+       elseif(param.eq.'Y COORDINATE')then
+        read(9,*)antpos(2)
+       elseif(param.eq.'Z COORDINATE')then
+        read(9,*)antpos(3)
+       elseif(param.eq.'COMMENTS')then
+        read(9,989)COMMENTS
+       elseif(param.eq.'REF')then
+        read(9,989)REF
+       elseif(param.eq.'INT DELAY P1 XR+XS (in ns)')then
+        read(9,*)recdelP1
+       elseif(param.eq.'INT DELAY P2 XR+XS (in ns)')then
+        read(9,*)recdelP2
+       elseif(param.eq.'ANT CAB DELAY (in ns)')then
+        read(9,*)cabdel
+       elseif(param.eq.'CLOCK CAB DELAY XP+XO (in ns)')then
+        read(9,*)refdel
+       elseif(param.eq.'LEAP SECOND')then
+        read(9,*)leapsec
+       endif      
+ 1    continue
+      call header
+     
+c internal delays in m:
+
+      recdelP1 = recdelP1*vitlum*1.0d-9
+      recdelP2 = recdelP2*vitlum*1.0d-9
+      
+c cable delays in 0.1 ns:
+      
+      cabdel = cabdel*10.
+      refdel = refdel*10.      
+      
+c determination of the tracks of the day 
+c MJDdep is the reference date for the schedules  (1 October 1997)
+
+      nsch=89
+      ileaps=leapsec/30
+      ileaps=(ileaps+1)*30
+      read(5,*)mjd
+      mjddep=50722.0
+      do 22 i=1,nsch
+      its=2+16*(i-1)
+      mi=mod(its,60)
+      he=its/60
+      call decal(mjd,mjddep,he,mi,schh(i),schmin(i))
+      schtime(i)=mjd+schh(i)/24.d0+schmin(i)/24.d0/60.d0
+     1 + dble(ileaps)/86400.d0
+   22 continue      
+      call classement(schh,schmin,schtime,89)
+       
+c dble(ileaps)/86400.d0 is added in order to account for the difference between the 
+c GPS time used in the RINEX files and UTC which is used in the tracking schedules    
+                         
+     
+c observation files:
+
+      open(unit=7,file='rinex_obs')
+      open(unit=71,file='rinex_obs_p')
+      open(unit=16,file='rinex_nav')
+      open(unit=81,file='rinex_nav_p')
+     
+c reading of ephemerides
+     
+  6    read(16,777)comment
+       if(comment.eq.'END OF HEADER')then
+       goto 7
+       else
+       goto 6
+       endif
+      
+  7    read(81,777)comment
+       if(comment.eq.'END OF HEADER')then
+       goto 75
+       else
+       goto 7
+       endif
+75     continue
+
+c reading of ephemerides  
+      
+       do 9 jkl=1,1500
+        read(16,90,end=12)prn,yn,mn,dn,hn,minn,secn,
+     1                            (svclk(jkl,i),i=1,3)
+        call datemjd(yn,mn,dn,hn,minn,secn,Timenav)
+        datenav(jkl)=Timenav
+	pprn(jkl)=prn
+        do 8 j=1,7
+  8      read(16,91)(brorb(jkl,j,i),i=1,4)   
+   9   continue
+ 12    jklprev=jkl
+   
+       do 10 jkl=jklprev,3000
+        read(81,90,end=13)prn,yn,mn,dn,hn,minn,secn,
+     1                              (svclk(jkl,i),i=1,3)
+        call datemjd(yn,mn,dn,hn,minn,secn,Timenav)
+        datenav(jkl)=Timenav
+	pprn(jkl)=prn
+        do 108 j=1,7
+108      read(81,91)(brorb(jkl,j,i),i=1,4)   
+10     continue
+
+   90 format(i2,5i3,f5.1,3d19.12)
+   91 format(3x,4d19.12)
+
+      
+13     continue
+
+
+c reading of the header of the observation file
+
+   70 format(i6,9(4x,a2))
+ 777  format(60x,a20)
+      read(7,*)rform
+      iforma=int(rform)
+      
+  57  read(7,777) comment
+      if(comment.eq.'# / TYPES OF OBSERV ')then
+      backspace 7
+      read(7,70)nbobsa,(obs(i),i=1,nbobsa)
+      do 2 i=1,nbobsa
+      if(obs(i).eq.'P1')colP1a=i
+      if(obs(i).eq.'P2')colP2a=i
+    2 if(obs(i).eq.'C1')colca=i
+      goto 57
+      else
+       if((iforma.eq.2.and.comment.eq.'END OF HEADER       ').
+     1     or.(iforma.eq.1.and.comment.eq.'                    '))then
+        goto 58
+       else
+        goto 57
+       endif
+      endif 
+           
+  58  read(71,*)rform
+      iformb=int(rform)
+  59  read(71,777)comment
+      if(comment.eq.'# / TYPES OF OBSERV ')then
+       backspace 71
+       read(71,70)nbobsb,(obs(i),i=1,nbobsb)
+       do 82 i=1,nbobsb
+      if(obs(i).eq.'P1')colP1b=i
+      if(obs(i).eq.'P2')colP2b=i
+   82  if(obs(i).eq.'C1')colcab=i
+       goto 59
+      else
+       if((iformb.eq.2.and.comment.eq.'END OF HEADER       ').
+     1     or.(iformb.eq.1.and.comment.eq.'                    '))then
+        goto 105
+       else
+        goto 59
+       endif
+      endif     
+          
+105    ipass=0
+      ipassv=0
+      
+c last reading in the rinex file of the day     
+      last=mjd+1.d0-30.d0/86400.d0
+      
+c ds= security delay for time comparisons (moment and timefirst or timestop)                
+      ds=0.1d0/86400.d0           
+
+      write(10,101)
+      write(10,102)
+
+c같같같같같같같같같같같같같같같같같같같      
+c begin the run for each track
+c같같같같같같같같같같같같같같같같같같같        
+      
+      iv=0
+      do 100 isch=1,nsch
+      ipk=0
+      ksec=0
+      timefirst=schtime(isch)
+      do 1516 isat=1,25
+          TRKL(isat)=0  
+      do 1513 kkk=1,26
+          measiono(kkk,isat)=0.d0
+1513      resquad(kkk,isat)=0.d0	  
+1516  continue
+      moment=0.d0
+      timestop=schtime(isch)+13.d0/60.d0/24.d0-1.d0/86400.d0
+      
+c reading of observations     
+
+  89  if(iv.eq.1 ) then       
+       read(71,776)string
+       if(string.eq.' ')goto 89
+       read(string,78)lflag
+       if(lflag.eq.0)then
+c        backspace 71
+        read(string,71)yy,mm,dd,hh,min,sec,lflag,nnsat,
+     1        (satgroup(i),satnum(i),i=1,min0(12,nnsat))
+        if(nnsat.gt.12)read(71,72)(satgroup(i),satnum(i),i=13,nnsat)       
+       elseif(lflag.eq.4)then
+c        backspace 71
+        read(string,74)lflag,nline
+        do 35 ii=1,nline
+ 35     read(71,*)
+        goto 89
+       elseif(lflag.eq.2)then
+        write(6,*)'moving antenna--stop'
+        stop
+       endif
+       
+       else
+       
+       read(7,776)string
+       if(string.eq.' ')goto 89       
+       read(string,78)lflag
+       if(lflag.eq.0)then
+c        backspace 7
+        read(string,71)yy,mm,dd,hh,min,sec,lflag,nnsat,
+     1       (satgroup(i),satnum(i),i=1,min0(12,nnsat))
+        if(nnsat.gt.12)read(7,72)(satgroup(i),satnum(i),i=13,nnsat)       
+       elseif(lflag.eq.4)then
+c        backspace 7
+        read(string,74)lflag,nline
+        do 36 ii=1,nline
+ 36     read(7,*)
+        goto 89
+       elseif(lflag.eq.2)then
+        write(6,*)'moving antenna--stop'
+        stop
+       endif 
+
+      endif                 
+
+   71 format(5i3,f11.7,i3,i3,12(a1,i2))
+   72 format(32x,12(a1,i2))
+   78 format(26x,i3)
+   74 format(26x,2i3)
+   
+c  GLONASS
+
+       do 943 i=1,nnsat
+       if(satgroup(i).eq.'S')satnum(i)=satnum(i)+100
+ 943   if(satgroup(i).eq.'R')satnum(i)=satnum(i)+100
+         deltaTK=0.
+
+       if(dabs(sec-60.).le.0.003)deltaTK=60.-sec
+       if(dabs(sec-30.).le.0.003)deltaTK=30.-sec
+       if(dabs(sec).le.0.003)deltaTK=-sec
+       sec=sec+deltaTK
+       
+       call datemjd(yy,mm,dd,hh,min,sec,moment)
+
+C Verify the DATE at first reading
+       if(iv.eq.1.and.ipassv.eq.0)then
+        ipassv=1
+        idate=int(moment-mjd-1.0d0)
+        if(idate.ne.0)then
+        write(6,*)'please verify the dates in the file "rinex_obs_p" '   
+        stop
+        endif
+       endif
+       if(iv.eq.0.and.ipass.eq.0.)then
+        ipass=1
+        idate=int(moment-mjd)
+        if(idate.ne.0)then
+        write(6,*)'please verify the dates in the file "rinex_obs" '      
+        stop
+        endif
+       endif
+   
+c  reading of  observations
+
+      do 4 iii=1,nnsat
+      if (iv.eq.1 ) then
+       if(colP1b.ne.0)col1=colP1b
+       if(colP1b.eq.0)col1=colcab
+       col2=colP2b
+ 888   read(71,776)string
+       if(string.eq.' ')goto 888
+       read(string,73)(valobs(k,iii),k=1,min0(5,nbobsb))
+       if(nbobsb.gt.5)then
+        read(71,776)string
+        read(string,73)(valobs(k,iii),k=6,nbobsb)
+       endif
+      else
+       if(colP1a.ne.0)col1=colP1a
+       if(colP1a.eq.0)col1=colca
+       col2=colP2a
+ 887   read(7,776)string
+       if(string.eq.' ')goto 887
+       read(string,73)(valobs(k,iii),k=1,min0(5,nbobsa))
+       if(nbobsa.gt.5)then
+        read(7,776)string
+        read(string,73)(valobs(k,iii),k=6,nbobsa)
+       endif
+      endif
+   73 format(5(f14.3,2x))
+  776 format(a80)
+    4 continue
+
+      if(iv.eq.0.and.dabs(moment-last).lt.0.1d0/86400.d0)iv=1
+      if(dabs(sec-60.).ge.0.004.and.dabs(sec-30.).ge.0.004.
+     1                          and.dabs(sec-0.).ge.0.004)goto 89
+    
+c construction of the 13 min vectors 
+      if(ksec.eq.0.and.moment.gt.timestop+ds)goto 100
+      IF(moment.ge.timefirst-ds.and.moment.le.timestop+ds)THEN
+      ksec=ksec+1
+      deltat(ksec)=deltaTK
+c  in order to have the same satellite list at each step
+      if(ipk.eq.1)then
+       do 131 j=1,25
+       p1valobs(j)=0.d0
+  131  p2valobs(j)=0.d0
+   
+       do 132 i=1,nnsat
+       do 132 j=1,nbsat
+       if(satnum(i).eq.satn(j))then
+       p1valobs(j)=valobs(col1,i)
+       p2valobs(j)=valobs(col2,i)
+       endif
+ 132   continue
+      do 134 j=1,nbsat
+      valobs(col1,j)=p1valobs(j)
+ 134  valobs(col2,j)=p2valobs(j)
+      endif
+
+      if(ipk.eq.0)then
+       nbsat=nnsat
+       do 158 i=1,nbsat
+ 158   satn(i)=satnum(i)
+       ipk=1
+      endif
+
+c   construction of the vectors 
+       epoch(ksec)=moment
+       do 5 i=1,nbsat
+	 if(valobs(col1,i).ne.0.d0.and.valobs(col2,i).ne.0.d0)then
+        if(colP1a.eq.0) valobs(col1,i)=
+     1     valobs(col1,i)+bias(satnum(i))*vitlum*1.0d-9
+	  resquad(ksec,i)=2.54573d0*(valobs(col1,i)-recdelP1)
+     1                         -1.54573d0*(valobs(col2,i)-recdelP2)
+          measiono(ksec,i)=(valobs(col1,i)-recdelP1)-resquad(ksec,i)
+	 TRKL(i)=TRKL(i)+1
+	 ic(i)=ic(i)+1
+	 endif
+   5	continue
+   
+      ENDIF   
+
+      if(moment.lt.timestop-ds)goto 89 
+      
+c we have now a vector  resquad(52) with the midpoints of the quadratic fits.
+c we have to aaply the following corrections:
+c  - geometric distance 
+c  - ionospheric delay
+c  - tropospheric delay
+c  - sagnac effet 
+c  - relativistic effect
+c  - group delay L1-L2
+c  - receiver delay
+c  - antenna + cables delays
+    
+      do 150 isat=1,nbsat
+      
+c      IF(TRKL(isat).eq.26) THEN
+c pour ne pas prendre les glonass dont on n'a pas les ephemerides
+      IF(TRKL(isat).eq.26.and.satn(isat).lt.100) THEN
+      
+      do 658 jkl=1,3000      
+      if(pprn(jkl).eq.satn(isat).and.
+     1          schtime(isch).le.datenav(jkl))then
+         djul=datenav(jkl)-44244.D0
+         djul=dmod(djul,7.D0)  
+         toc=djul*86400.D0
+         goto 659
+       endif
+  658  continue    
+  
+
+  659   do 120 ksec=1,26	
+	
+	if(resquad(ksec,isat).ne.0.)then
+	
+	iii=0
+	corprev=0.d0
+        djul=epoch(ksec)-44244.D0
+        djul=dmod(djul,7.D0)  
+        trc=djul*86400.D0 
+	
+	IOE=int(brorb(jkl,1,1))
+  54	if(iii.eq.0)tau=resquad(ksec,isat)/vitlum
+	if(iii.eq.1)tau=corrgeom/vitlum
+	ttr=trc-tau
+        call satpos(brorb,Ttr,Trel,X,status,jkl)
+	alpha=tau*WE
+	xs(1)=x(1)*dcos(alpha)+x(2)*dsin(alpha)
+	xs(2)=-x(1)*dsin(alpha)+x(2)*dcos(alpha)
+	xs(3)=x(3)
+        corrgeom=dsqrt((antpos(1)-Xs(1))**2
+     1               +(antpos(2)-Xs(2))**2+(antpos(3)-Xs(3))**2)
+     
+	if(dabs(corrgeom-corprev).lt.1.0d-5)goto 64
+	corprev=corrgeom
+	iii=1
+	goto 54
+ 64	continue
+	
+c  measured iono (unit= m)
+
+	iono(ksec)=measiono(ksec,isat)
+	
+c  tropo (unit= m)
+        call AZEL(Xs,antpos,Az,El,Stat)
+        call XYZLLA(antpos,lla)
+        mf = 1.d0/(dsin(El)+0.00143d0/(dtan(El)+0.0455d0))
+        if(lla(3).le.1000.)then
+        zpd = 2162.d0 + Ns*(1.-lla(3)/1000.d0) 
+     1                + 0.5d0*DeltaN*(1.-(lla(3)/1000.d0)**2)
+        else	
+	zpd = 732.d0 - 8.d0 * (NS+DeltaN)/NSlog *
+     1         (dexp(-NSlog)-dexp(0.125d0*(1.d0-lla(3)/1000.d0)*NSlog))
+        endif
+        tropo(ksec)=mf*zpd/1000.d0      
+ 	
+c corrected pseudorange	
+	pcor = resquad(ksec,isat) + trel*vitlum - tropo(ksec) 	
+        CR = Pcor-corrgeom
+ 	
+c computation of REFSV (unit= 0.1 ns)
+        refsv(ksec)= (CR/vitlum)*1.0d+10 - cabdel + refdel
+     1                                   +deltaT(ksec)*1.0d+10
+	
+c  satellite clock correction (unit= 0.1 ns)
+        tclock=ttr-toc
+	if(tclock.gt.302400.d0)tclock=tclock-604800.d0
+	if(tclock.lt.-302400.d0)tclock=tclock+604800.d0
+        clocksat=(svclk(jkl,1)+svclk(jkl,2)*tclock
+     1         +svclk(jkl,3)*tclock*tclock)*1.0d+10
+	
+c  computation of  REFGPS (unit= 0.1 ns)
+        refgps(ksec)=refsv(ksec)+clocksat   
+	
+
+       else
+       refgps(ksec)=0.
+       refsv(ksec)=0.
+       tropo(ksec)=0.
+       iono(ksec)=0.
+       endif
+   
+ 120   continue
+      
+       tgd=brorb(jkl,6,3)
+      
+
+c  AZth et ELv at the midpoint of the track
+
+        corprev=0.
+	iii=0
+        djul=schtime(isch)-30./86400.+6.5/24./60.-44244.0
+     1        +dble(leapsec)/86400.
+        djul=dmod(djul,7.D0)  
+        trc=djul*86400.D0
+  53	if(iii.eq.0)tau=resquad(13,isat)/vitlum
+	if(iii.eq.1)tau=corrgeom/vitlum
+	ttr=trc-tau
+        call satpos(brorb,Ttr,Trel,X,status,jkl)
+	alpha=tau*WE
+	xs(1)=x(1)*dcos(alpha)+x(2)*dsin(alpha)
+	xs(2)=-x(1)*dsin(alpha)+x(2)*dcos(alpha)
+	xs(3)=x(3)
+        corrgeom=dsqrt((antpos(1)-Xs(1))**2
+     1               +(antpos(2)-Xs(2))**2+(antpos(3)-Xs(3))**2)
+	if(dabs(corrgeom-corprev).lt.1.0d-5)goto 63
+	corprev=corrgeom
+	iii=1
+	goto 53
+ 63	continue
+        call AZEL(Xs,antpos,Az,El,Stat)
+	el=el/pi*1800.d0
+	az=az/pi*1800.d0
+	elv=nint(el)
+	azth=nint(az)
+	
+c  linear fits
+      call fitlin(epoch,refsv,refsvmil,srsv,stdv)
+      call fitlin(epoch,refgps,refgpsmil,srgps,dsg)
+      call fitlin(epoch,tropo,mdtr,smdt,stdv)
+      call fitlin(epoch,iono,mdio,smdi,isg)
+
+c  iono and tropo in 0.1 ns
+       mdtr=mdtr/vitlum*1.0d+10
+       mdio=(mdio/vitlum- tgd)*1.0d+10
+       isg=isg/vitlum*1.0d+10
+      
+c drifts in  0.1ps/s
+      srsv=srsv*1000.d0/86400.d0
+      srgps=srgps*1000.d0/86400.d0
+      smdt=smdt/vitlum*1.0d+10 *1000.d0 /86400.d0
+      smdi=smdi/vitlum*1.0d+10 *1000.d0 /86400.d0     
+
+      class='FF'
+    	
+c writing of results241
+  154 trkl(isat)=trkl(isat)*30
+      secsch=0
+      mjdtrk=int(mjd)
+      ick=0
+       if(schmin(isch).gt.48.and.schh(isch).gt.23)mjdtrk=int(mjd)-1
+       write(name,104)satn(isat),class,mjdtrk,schh(isch),
+     1   schmin(isch),secsch,trkl(isat),elv,azth,nint(refsvmil),
+     1   nint(srsv),nint(refgpsmil),nint(srgps),nint(dsg),
+     1   ioe,nint(mdtr),nint(smdt),nint(mdio),nint(smdi),
+     1   nint(mdio),nint(smdi),nint(isg),fr,hc,frc
+       do 656 kk=1,125
+ 656   ick=ick+ichar(name(kk:kk))
+       ck=mod(ick,256)
+       write(10,103)satn(isat),class,mjdtrk,schh(isch),
+     1   schmin(isch),secsch,trkl(isat),elv,azth,nint(refsvmil),
+     1   nint(srsv),nint(refgpsmil),nint(srgps),nint(dsg),
+     1   ioe,nint(mdtr),nint(smdt),nint(mdio),nint(smdi),
+     1   nint(mdio),nint(smdi),nint(isg),fr,hc,frc,ck
+
+  101 format('PRN',1x,'CL',2x,'MJD',2x,'STTIME',1x,'TRKL',1x,
+     1 'ELV',1x,'AZTH',3x,'REFSV',6x,'SRSV',5x,'REFGPS',4x,'SRGPS',
+     2  2x,'DSG ','IOE ','MDTR ','SMDT ','MDIO ',
+     3 'SMDI MSIO SMSI ISG FR HC FRC CK')
+  102 format(13x,'hhmmss',2x,'s',2x,'.1dg ','.1dg',4x,'.1ns',5x,
+     1  '.1ps/s',5x,'.1ns',4x,'.1ps/s ','.1ns',
+     2  5x,'.1ns.1ps/s.1ns.1ps/s.1ns.1ps/s.1ns')
+ 104   format(1x,i2,1x,a2,1x,i5,1x,3i2.2,1x,i4,1x,i3,1x,i4,sp,1x,i11,
+     1   1x,i6,ss,1x,i11,sp,1x,i6,1x,ss,i4,1x,i3,1x,i4,1x,
+     2   sp,i4,ss,1x,i4,1x,sp,i4,ss,1x,i4,1x,i4,1x,i3,1x,i2,
+     3  1x,i2,1x,a3,1x)    
+ 103   format(1x,i2,1x,a2,1x,i5,1x,3i2.2,1x,i4,1x,i3,1x,i4,sp,1x,i11,
+     1   1x,i6,ss,1x,i11,sp,1x,i6,1x,ss,i4,1x,i3,1x,i4,1x,
+     2   sp,i4,ss,1x,i4,1x,sp,i4,ss,1x,i4,1x,i4,1x,i3,1x,i2,
+     3  1x,i2,1x,a3,1x,z2)    
+
+      ENDIF   
+
+  150 continue
+  
+  100 continue
+      stop
+      end
+
+      
+
+c******************************************
+
+   
+      subroutine satpos(brorb,Ttr,Trel,X,status,jkl)
+
+C       brorb : broadcast ephemeris
+C       Ttr : satellite GPS time
+C       Trel: relativistic correction term
+C       X   : satellite position
+
+      real*8 brorb(3000,7,4),X(3)
+      real*8 Ttr,Trel,M0, dn, ec, A, W0, i0, w, Wdot,
+     |       Cuc, Cus, Crc, Crs, Cic, Cis, Toe, Idot,
+     |       T, n0, n, M, E, Eold, snu, cnu, nu, phi, 
+     |       du, dr, di, u, r, i, Xdash, Ydash, Wc,pi,mu,Wedot,F
+      
+      logical status
+      
+      integer it
+
+      data pi/3.1415926535898d0/,mu/3.986005d+14/,
+     |       Wedot/7.2921151467d-5/,F/-4.442807633d-10/
+
+C     for RINEX files
+
+      M0  = brorb(jkl,1,4)
+      dn  = brorb(jkl,1,3)
+      W0  = brorb(jkl,3,3)
+      i0  = brorb(jkl,4,1)
+      w   = brorb(jkl,4,3)
+      Wdot= brorb(jkl,4,4)
+      idot= brorb(jkl,5,1) 
+
+C     **************
+       
+      Crs = brorb(jkl,1,2)
+      Cuc = brorb(jkl,2,1)
+      ec  = brorb(jkl,2,2)
+      Cus = brorb(jkl,2,3)
+      A   = brorb(jkl,2,4)*brorb(jkl,2,4)    
+      Toe = brorb(jkl,3,1)
+      Cic = brorb(jkl,3,2)
+      Cis = brorb(jkl,3,4)
+      Crc = brorb(jkl,4,2) 
+      
+      status=.true.
+      it=0
+       
+      T= Ttr - Toe
+      
+      if (T.gt.302400.d0)  T = T - 604800.d0
+      if (T.lt.-302400.d0)  T = T + 604800.d0
+      n0 = dsqrt(mu / (A*A*A))
+      n = n0 + dn
+      M = M0 + n*T
+      E = M 
+
+   10 it=it+1
+      Eold = E
+      E = M + ec * dsin(E)
+      if ((it.eq.10).or.(dabs(E - Eold).le.(1.0d-8))) goto 12
+      goto 10
+   12 if (it.eq.10) then
+      status = .false. 
+      write(6,*)'no convergence for E'
+      goto 15
+      endif     
+      snu = dsqrt(1.d0 - ec*ec) * dsin(E) / (1.d0 - ec*dcos(E))
+      cnu = (dcos(E) - ec) / (1.d0 - ec*dcos(E))
+      nu=datan2(snu,cnu)
+      
+      phi = nu + w
+
+      du = Cuc*dcos(2.d0*phi) + Cus*dsin(2.d0*phi)
+      dr = Crc*dcos(2.d0*phi) + Crs*dsin(2.d0*phi)
+      di = Cic*dcos(2.d0*phi) + Cis*dsin(2.d0*phi)
+      
+      u = phi + du
+      r = A*(1.d0 - ec*dcos(E)) + dr
+      i = i0 + idot*T +di
+
+      Xdash = r*dcos(u)
+      Ydash = r*dsin(u)
+     
+
+      Wc= W0 + (Wdot - Wedot)*T - Wedot*Toe
+                        
+      X(1) = Xdash*dcos(Wc) - Ydash*dcos(i)*dsin(Wc)
+      X(2) = Xdash*dsin(Wc) + Ydash*dcos(i)*dcos(Wc)
+      X(3) = Ydash*dsin(i)
+
+C     relativistic correction term
+      Trel = F * ec * brorb(jkl,2,4) * dsin(E) 
+
+   15 return 
+      end
+
+
+c******************************************
+      
+      subroutine AZEL(Xsat,Xrec,Az,El,Stat)
+      
+      logical stat
+      Real*8 dx,dy,dz,s,az,el,cosel,lla(3),ax,
+     1       pi,xsat(3),xrec(3),range,cmre,cp,cl,sp,sl
+            
+      pi=3.1415926535898d0
+      ax=0.9966472d0 
+      dx=xsat(1)-xrec(1)
+      dy=xsat(2)-xrec(2)
+      dz=xsat(3)-xrec(3)
+      range=dsqrt(dx*dx+dy*dy+dz*dz)
+      cmre=dsqrt(xrec(1)*xrec(1)+xrec(2)*xrec(2)+xrec(3)*xrec(3))
+      
+      cosel=(dx*xrec(1)+dy*xrec(2)+dz*xrec(3))/(cmre*range) 
+      if(cosel.lt.0.d0)then
+      el=0.
+      else
+      el=pi/2.d0-dacos(cosel)
+      endif
+      
+      call XYZLLA(xrec,lla)
+      cp=dcos(lla(1))
+      cl=dcos(lla(2))
+      sp=dsin(lla(1))
+      sl=dsin(lla(2))
+      az=datan2((-dx*sl+dy*cl),(-dx*sp*cl-dy*sp*sl+dz*cp*ax))
+      if(az.lt.0.d0)az=az+2.d0*pi
+      return
+      end
+c------------------------------------------------       
+      subroutine XYZLLA(xi,lla)
+      
+      implicit real*8(d)
+      
+      real*8 xi(3),lla(3),p,t,st,ct,rn,a,b,pi
+      
+      pi=3.1415926535898d0 
+      a=6378137.0d0
+      da=a
+      df=0.00335281066d0
+      dx=xi(1)
+      dy=xi(2)
+      dz=xi(3)
+      DA2=a*a                                                           
+      DB=DA*(1.D0-DF)                                                     
+      DE=DSQRT((DA2-DB*DB)/DA2)                                           
+      DE2=DE*DE                                                           
+      DL=(DATAN(DY/DX))                                              
+      IF(DL)6,3,3                                                         
+    3 IF(DX)5,8,8                                                         
+    5 DL=DL+pi                                                        
+      GO TO 8                                                             
+    6 IF(DX)5,8,7                                                         
+    7 DL=DL+2.*pi                                                        
+    8 DXY=DSQRT(DX**2+DY**2)                                              
+      DP=DATAN(DZ/DXY)                                                    
+      L=1                                                                 
+   10 DN=DA/DSQRT(1.D0-(DE*DSIN(DP))**2)                                  
+      GO TO (11,20),L                                                     
+   11 DZP=DZ+DE2*DN*DSIN(DP)                                              
+      DPH=DATAN(DZP/DXY)                                                  
+      DRES=DABS(DP-DPH)                                    
+      IF(DRES.LT.0.0001D0)GO TO 15                                        
+      DP=DPH                                                              
+      GO TO 10                                                            
+   15 L=2                                                                 
+      DCP=DCOS(DPH)                                                       
+      DCL=DCOS(DL)                                                   
+      GO TO 10                                                            
+   20 DH=(DX/(DCP*DCL))-DN  
+      lla(1)=dph
+      lla(2)=dl
+      lla(3)=dh                                              
+      RETURN                                                              
+      END                    
+
+c------------------------------------------------------
+      subroutine fitlin (time,vect,valmil,deriv,stdv)
+      
+      real*8 vect(26),valmil,deriv,stdv,abscisse,time(26),
+     1    s,sx,sxx,sy,sxy,delta,a,b,ord,cal,estim,tmil,t1
+      common/leap/leapsec
+
+      stdv=0.d0
+      s=0.d0
+      sx=0.d0
+      sxy=0.d0
+      sxx=0.d0
+      sy=0.d0
+      cal=1.0d3
+      tmil=time(1)+6.5d0/60.d0/24.d0
+     1       -30.d0/86400.d0+dble(leapsec)/86400.d0
+      t1=time(1)
+      do 15 j=1,26
+      abscisse = time(j)-t1
+      if(vect(j).ne.0.d0)then
+      ord=(vect(j)-vect(1))/cal
+      s = s+ 1.0d0
+      sx = sx + abscisse
+      sxx = sxx +  abscisse * abscisse
+      sy = sy + ord
+      sxy = sxy + ord * abscisse
+      endif
+  15  continue
+      if( s .gt. 1.d0 )then
+       delta = (sxx * s) - (sx * sx)
+       A = ((sy * sxx) - (sx * sxy)) / delta
+       B = ((s * sxy) - (sx * sy)) / delta
+      else
+       A = 98.0d0
+       B = 98.0d0
+      endif
+      if(A.ne.98.0d0)then      
+      valmil=(a+b*(tmil-t1))*cal + vect(1)
+      deriv=B*cal
+      stdv=0.
+      do 20 j=1,26
+      estim=(a+b*(time(j)-t1))*cal+ vect(1)
+ 20   stdv=stdv+(vect(j)-estim)**2
+      stdv=dsqrt(stdv/(s-2.))
+      else
+      valmil=9999999
+      deriv=99999999
+      stdv=9999999
+      endif      
+      return
+      end
+
+      
+c------------------------------------------------------      
+
+      SUBROUTINE datemjd ( IAN, MO, JO, hh,min,sec, dpeju )
+c output : dpeju = mean julian day
+
+      IMPLICIT REAL*8( d )
+      REAL*8 sec
+      integer hh, NJAO( 12 ), NJAB( 12 ), NJAR( 12 )
+      
+      DATA NJAO /0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334/
+      DATA NJAB /0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335/
+      DATA NJAR /0, 31, 59, 90, 120, 151, 181, 212, 243, 263, 294, 324/
+      
+      NOPT=1     
+      dfj= (hh + dble(min)/60. + sec/3600.) / 24.
+      ian=ian+2000
+
+    1 I1  =  IAN
+      IF ( MO .LE. 2 ) I1  =  IAN - 1
+
+      I2  =  MO  +  1
+      IF ( MO .LE. 2 ) I2  =  MO  +  13
+
+      D1 = JO + DFJ
+
+      IF ( I1 .GE. 0 ) IF ( IAN - 1582 ) 2, 3, 5
+
+c     ANTE CHRISTUM NATUM DATE
+      DPEJU =   dINT( 365.25*dble(I1) - 0.75 ) 
+     *        + dINT( 30.6001*dble(I2) )+ D1 + 1720994.5
+     *         -2400000.5d0
+      RETURN
+
+c     DATE IN THE JULIAN CALENDAR ( -> 4 OCT. 1582 )
+    2 DPEJU = dINT( 365.25*dble(I1) ) 
+     *  + dINT( 30.6001*dble(I2) ) + D1 + 1720994.5
+     *        -2400000.5d0
+      RETURN
+
+c     DATE IN 1582 
+    3 IF ( MO - 10 ) 2, 4, 5
+     
+c     DATE IN OCT 1582
+    4 IF ( NOPT .EQ. 2 ) GO TO 6
+c     DATE IN OCT 1582 ( YYYY, MM, DD )
+      IF ( JO .LT. 15 ) GO TO 2
+
+c     DATE IN THE GREGORIAN CALENDAR ( 15 OCT 1582 -> )
+    5 DPEJU = dINT( 365.25*dble(I1) ) + dINT( 30.6001*dble(I2) ) 
+     *         + D1 + 1720994.5 + dble(2-I1/100 + I1/400)
+     *        -2400000.5d0
+      RETURN
+
+c     DATE IN OCT 1582 ( YYYY, DDD )
+    6 continue
+
+      END
+      
+c-------------------------------------------
+
+      subroutine decal(mjd,mjddep,he,mi,schh,schmin)
+      
+      integer hdecal,schmin,schh,he,mi,t0,tt
+      real*8 mjd,mjddep
+      
+      t0=he*60+mi
+      tt=t0-4*int(mjd-mjddep)
+      do 15 while (tt.lt.0)
+ 15   tt=tt+1436
+      schh= int(tt/60)
+      schmin=mod(tt,60)
+     
+      return
+      end
+
+c-----------------------------------------------------------
+
+      
+
+      subroutine classement(schh,schm,schtime,nn)
+      
+      real*8 schtime(nn),provt(nn)
+      integer schh(nn),schm(nn),provh(nn),provm(nn)
+      
+      ndep=1
+      do 1 i=2,nn
+  1   if(schtime(i).lt.schtime(ndep)) ndep=i
+      do 2 i=1,nn-ndep+1
+       provt(i)=schtime(ndep+i-1)
+       provh(i)=schh(ndep+i-1)
+  2     provm(i)=schm(ndep+i-1)
+      do 3 i=nn-ndep+2,nn
+       provt(i)=schtime(i-(nn-ndep+1))
+       provh(i)=schh(i-(nn-ndep+1))
+ 3      provm(i)=schm(i-(nn-ndep+1))
+      do 4 i=1,nn
+       schtime(i)=provt(i)
+       schh(i)=provh(i)
+  4     schm(i)=provm(i)
+      return
+      end
+      
+c-----------------------------------------------------------
+      
+      subroutine header
+c only for Z-XII3T receivers      
+
+      real*8 antpos(3),recdelP1,recdelP2,cabdel,refdel
+      integer ck,ch
+      character*30 LAB,REF,RCVR,REVDATE,COMMENTS
+      character*80 abs
+      
+      common/head/ LAB,REF,RCVR,REVDATE,COMMENTS,antpos,
+     1             recdelP1,recdelP2,cabdel,refdel,ch
+             
+                
+      
+      write(10,612)
+      write(10,613)revdate
+      write(10,614)rcvr
+      write(10,615)ch
+      write(10,616)rcvr
+      write(10,601)LAB
+      write(10,602)antpos(1)
+      write(10,603)antpos(2)
+      write(10,604)antpos(3)
+      write(10,610)
+      write(10,611)comments
+      write(10,605)recdelP1,recdelP2
+      write(10,606)cabdel
+      write(10,607)refdel
+      write(10,608)REF
+      
+      
+ 612  format('CGGTTS GPS/GLONASS DATA FORMAT VERSION = 02')
+ 613  format('REV DATE = ',a30)
+ 614  format('RCVR = ',a30,'R2CGGTTS v4.1')
+ 615  format('CH = ',i2,' (GPS)')
+ 616  format('IMS = ',A30)
+ 601  format('LAB = ',A30)
+ 602  format('X =',sp,f12.2,' m (GPS)')
+ 603  format('Y =',sp,f12.2,' m (GPS)')
+ 604  format('Z =',sp,f12.2,' m (GPS)')
+ 605  format('INT DLY = ',f6.1,' ns (GPS P1), ',f6.1,' ns (GPS P2)')
+ 606  format('CAB DLY = ',f6.1,' ns (GPS)')
+ 607  format('REF DLY = ',f6.1,' ns')
+ 608  format('REF = ',a30)
+ 609  format('CKSUM = ',z2.2)
+ 610  format('FRAME = ITRF')
+ 611  format('COMMENTS = ',a30)
+ 
+      rewind(10)
+      do 1 k=1,15
+      read(10,20)abs
+   20 format(a50)
+      do 15 i=1,50
+      if(abs(i:i+30).eq.'   ')then
+      goto 1
+      else
+      ick=ick+ichar(abs(i:i))
+      endif
+ 15   continue
+ 1    continue
+          
+      write(abs,*)'CKSUM = '
+      do 16 i=1,50
+      if(abs(i:i+2).eq.'   ')then
+      goto 9
+      else
+      ick=ick+ichar(abs(i:i))
+      endif
+ 16   continue
+ 
+ 9    ick=ick+32
+      ck=mod(ick,256)
+ 
+      write(10,609)ck           
+      write(10,*)
+      
+      return
+      end

@@ -1,0 +1,17 @@
+
+
+A sophisticated reader may notice that in fact a Bitcoin address is the hash of the elliptic curve public key, and not the public key itself. However, it is in fact perfectly legitimate cryptographic terminology to refer to the pubkey hash as a public key itself. This is because Bitcoin's cryptography can be considered to be a custom digital signature algorithm, where the public key consists of the hash of the ECC pubkey, the signature consists of the ECC pubkey concatenated with the ECC signature, and the verification algorithm involves checking the ECC pubkey in the signature against the ECC pubkey hash provided as a public key and then verifying the ECC signature against the ECC pubkey.
+
+See the Yellow Paper for the Ethereum Virtual Machine (which is useful as a specification and as a reference for building an Ethereum client from scratch), while also there are many topics in the Ethereum wiki, such as sharding developmment, core development, dapp development, research, Casper R&D, and networking protocols. For research and possible future implementation there is ethresear.ch.
+
+Modified Merkle Patricia Trie Specification
+
+ every transaction must have a "nonce", such that the account keeps track of the nonces used and only accepts a transaction if its nonce is 1 after the last nonce used.
+
+LOG: LOG is meant to log events, see trie usage section above.
+
+SHA-3
+Keccak 256-bit hash
+
+
+Bloom filter
