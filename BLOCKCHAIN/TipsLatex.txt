@@ -1,0 +1,74 @@
+\documentclass[letterpaper]{article}
+
+
+%%%%%%%%%%%%
+%Paquetes
+%%%%%%%%%%%%
+%\documentclass[journal=esthag,manuscript=article]{achemso}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{fancyhdr}
+\usepackage{authblk}
+\usepackage{amsfonts}
+\usepackage[version=3]{mhchem}
+\usepackage{textgreek}
+\usepackage{pdflscape} % landscape pages
+\usepackage{lmodern} % Previene advertencias sobre fuentes no disponibles
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[left=3cm,right=2cm,top=2cm,bottom=3cm]{geometry} % Configura los margenes de página
+%\usepackage{lineno} %Numeros en las lineas
+%\linenumbers
+%Paquete para incluir hipervínculos
+\usepackage[colorlinks=true, 
+linkcolor = black,
+urlcolor  = blue,
+citecolor = black,
+anchorcolor = blue]{hyperref}
+\usepackage{lipsum}
+\usepackage{Sweave}
+\usepackage{multirow}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{array}
+\usepackage{tabu}
+\usepackage{caption} %Permite escribir en negrita los titulos de las figuras y las tablas.
+\usepackage[labelfont=bf]{caption} %Configura los titulos de las figuras y las tablas en negrita.
+
+%Paquete para el manejo de las unidades en el Sistema Internacional
+\usepackage{siunitx}
+\sisetup{mode=text, output-decimal-marker = {,}, per-mode = symbol, qualifier-mode = phrase, qualifier-phrase = { de }, list-units = brackets, range-units = brackets, range-phrase = --}
+\DeclareSIUnit[number-unit-product = \;] \atmosphere{atm}
+\DeclareSIUnit[number-unit-product = \;] \pound{lb}
+\DeclareSIUnit[number-unit-product = \;] \inch{"}
+\DeclareSIUnit[number-unit-product = \;] \foot{ft}
+\DeclareSIUnit[number-unit-product = \;] \yard{yd}
+\DeclareSIUnit[number-unit-product = \;] \mile{mi}
+\DeclareSIUnit[number-unit-product = \;] \pint{pt}
+\DeclareSIUnit[number-unit-product = \;] \quart{qt}
+\DeclareSIUnit[number-unit-product = \;] \flounce{fl-oz}
+\DeclareSIUnit[number-unit-product = \;] \ounce{oz}
+\DeclareSIUnit[number-unit-product = \;] \degreeFahrenheit{\SIUnitSymbolDegree F}
+\DeclareSIUnit[number-unit-product = \;] \degreeRankine{\SIUnitSymbolDegree R}
+\DeclareSIUnit[number-unit-product = \;] \usgallon{galón}
+\DeclareSIUnit[number-unit-product = \;] \uma{uma}
+\DeclareSIUnit[number-unit-product = \;] \ppm{ppm}
+\DeclareSIUnit[number-unit-product = \;] \eqg{eq-g}
+\DeclareSIUnit[number-unit-product = \;] \normal{\eqg\per\liter\of{solución}}
+\DeclareSIUnit[number-unit-product = \;] \molal{\mole\per\kilo\gram\of{solvente}}
+
+\title{\textbf{Trazabilidad de tiempo UTC y Time Stamp en Blockchain}}
+\author{Guillermo Pérez Alba}
+
+\affil{ETSIIT - Universidad de Granada}
+\affil{Contexto histórico}
+
+\section{Contexto histórico}
+\subsection{Estudios de la Blockchain de Bitcoin}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.48\textwidth]{images/figura1.PNG}
+\caption{\label{fig1}Block Propagation}
+\end{figure}
+
+\vspace{1mm}
