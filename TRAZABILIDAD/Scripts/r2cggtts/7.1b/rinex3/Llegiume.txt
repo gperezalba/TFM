@@ -1,0 +1,8 @@
+Per descomprimir els fitxers RINEX 3 amb compressió binaria (*.crx.gz) a RINEX (*.rnx) realitzar
+els següents passos:
+
+- Copiar els fitxers RINEX 3 amb compressió binaria al mateix directori 
+  que els fitxers del directori "Descomprimir_gz_a_RINEX" (crx2rnx.exe, 
+  GZIP.exe i Descomprimir_gz_a_RINEX.bat)
+  
+- Fer doble clic sobre el fitxer bat "Descomprimir_gz_a_RINEX.bat"
