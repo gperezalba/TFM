@@ -1,0 +1,7 @@
+Julio:
+-Contexto de BTC, ETH (PoS, Sharding) y Permisionadas
+-Conseguir ejecutar correctamente R2CGGTTS
+
+Agosto:
+-API Blockchain
+-Pruebas con R2CGGTTS
