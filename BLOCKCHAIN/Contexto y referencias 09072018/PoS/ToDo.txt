@@ -1,0 +1,22 @@
+Leer Byzantine fault tolerance research
+
+Leer FLP impossibility 
+http://www.the-paper-trail.org/post/2008-08-13-a-brief-tour-of-flp-impossibility/
+
+http://www.the-paper-trail.org/post/2008-08-13-a-brief-tour-of-flp-impossibility/
+
+http://groups.csail.mit.edu/tds/papers/Lynch/jacm88.pdf
+
+https://link.springer.com/chapter/10.1007%2F978-3-540-77444-0_7
+
+https://socrates1024.s3.amazonaws.com/consensus.pdf
+
+https://nakamotoinstitute.org/static/docs/anonymous-byzantine-consensus.pdf
+
+https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/
+
+https://arxiv.org/pdf/1406.5694.pdf
+
+https://www.youtube.com/watch?v=phXohYF0xGo
+
+https://www.gwern.net/Self-decrypting-files

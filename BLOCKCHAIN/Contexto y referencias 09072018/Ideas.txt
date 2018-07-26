@@ -1,0 +1,7 @@
+Mix PoW con PoT
+Nodos publican su CGGTTS
+Solo los que estén dentro de x límites o dentro de los percentiles 25 75 podrán ser los encargados de minar el siguiente bloque
+De entre los elegidos antes, o se elige 1 (PoS) o se hace con PoW con una dificultad calculada en base al límite superior del retardo (calculado con la info de los CGGTTS)
+Ese límite superior es tratado en el paper: http://groups.csail.mit.edu/tds/papers/Lynch/jacm88.pdf
+Se podría incrementar la conectividad de todos los nodos no elegidos con los nodos elegidos (ya que uno de ellos minará el siguiente bloque)
+Si se incrementa todos van a conocer el siguiente bloque con un delay muy pequeño y cuando se empiece el proceso de nuevo para minar el siguiente bloque todos tendrán la misma cadena

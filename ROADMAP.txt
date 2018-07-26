@@ -5,3 +5,4 @@ Julio:
 Agosto:
 -API Blockchain
 -Pruebas con R2CGGTTS
+-Acabar curso SmartContracts StackSkills
