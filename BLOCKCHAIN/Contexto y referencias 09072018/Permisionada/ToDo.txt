@@ -1,0 +1,8 @@
+Leer PracticalBFT para afianzar conocimientos de los algoritmos IBFT (prepepare,prepare,commit,etc)
+
+QUORUM https://github.com/jpmorganchase/quorum
+QuorumPaper.pdf
+
+Cuando se entienda bien bien Quorum pasar a Hyperledger
+JPM_Hyperledger_QuorumIntro_20160922.pdf
+Buscar más de Hyperledger

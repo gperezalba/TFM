@@ -1,5 +1,9 @@
 Leer Byzantine fault tolerance research
 
+Despues de BFT leer http://groups.csail.mit.edu/tds/papers/Lynch/jacm88.pdf
+es muy denso y largo pero puede ser interesante
+Habla de algoritmos de consenso sincronos y asincronos
+
 Leer FLP impossibility 
 http://www.the-paper-trail.org/post/2008-08-13-a-brief-tour-of-flp-impossibility/
 
