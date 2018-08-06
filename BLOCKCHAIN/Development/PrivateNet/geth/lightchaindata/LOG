@@ -1,0 +1,26 @@
+=============== Aug 6, 2018 (CEST) ===============
+17:17:28.890638 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+17:17:28.898967 db@open opening
+17:17:28.899964 version@stat F·[] S·0B[] Sc·[]
+17:17:28.901958 db@janitor F·2 G·0
+17:17:28.902957 db@open done T·2.9927ms
+=============== Aug 6, 2018 (CEST) ===============
+19:14:21.350248 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+19:14:21.353569 version@stat F·[] S·0B[] Sc·[]
+19:14:21.353569 db@open opening
+19:14:21.353569 journal@recovery F·1
+19:14:21.356577 journal@recovery recovering @1
+19:14:21.363530 memdb@flush created L0@2 N·9 S·543B "H^\x1f..א\xe0,v3":"r\x00\x00..א\xe0,v5"
+19:14:21.364498 version@stat F·[1] S·543B[543B] Sc·[0.25]
+19:14:21.374603 db@janitor F·3 G·0
+19:14:21.374603 db@open done T·21.0334ms
+=============== Aug 6, 2018 (CEST) ===============
+19:14:37.215783 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+19:14:37.215783 version@stat F·[1] S·543B[543B] Sc·[0.25]
+19:14:37.215783 db@open opening
+19:14:37.215783 journal@recovery F·1
+19:14:37.218781 journal@recovery recovering @3
+19:14:37.227288 memdb@flush created L0@5 N·1 S·301B "eth..א\xe0,v11":"eth..א\xe0,v11"
+19:14:37.228285 version@stat F·[2] S·844B[844B] Sc·[0.50]
+19:14:37.238147 db@janitor F·4 G·0
+19:14:37.238147 db@open done T·22.3637ms

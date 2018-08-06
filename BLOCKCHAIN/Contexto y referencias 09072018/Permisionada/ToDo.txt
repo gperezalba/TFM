@@ -1,6 +1,9 @@
 Leer PracticalBFT para afianzar conocimientos de los algoritmos IBFT (prepepare,prepare,commit,etc)
 
 QUORUM https://github.com/jpmorganchase/quorum
+Leer raft.pdf
+Leer raft-based consensus for eth/quorum https://github.com/jpmorganchase/quorum/blob/master/raft/doc.md
+Leer Equity Trade... https://github.com/jpmorganchase/quorum/wiki/ZSL
 QuorumPaper.pdf
 
 Cuando se entienda bien bien Quorum pasar a Hyperledger
