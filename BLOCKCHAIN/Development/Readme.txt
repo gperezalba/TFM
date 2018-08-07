@@ -11,3 +11,21 @@ geth attach ipc:\\.\pipe\geth.ipc
 miner.start(2)
 eth.getBalance(eth.coinbase)
 miner.stop()
+
+//INSTALL TRUFFLE
+npm install -g truffle
+truffle init
+
+//INSTALL ETH TEST RPC
+npm install -g ethereumjs-test
+
+//PROJECT FROM TRUFFLE BOX
+truffle unbox pet-shop
+
+//TESTRPC NETWORK
+testrpc
+
+truffle migrate
+
+truffle serve
+
