@@ -1,0 +1,12 @@
+Iniciar con geth mi PrivateNet
+Ponerla a minar
+Iniciar Mist 
+Hacer el deploy de un contrato 
+Interaccionar con el contrato
+
+Recordar docu de solidity a fondisimo
+Ver ejemplos de SmartContracts
+Leer el articulo de errores comunes en SmartContracts de Alberto Toribio
+Hacer mi smartcontract
+
+Volver a Dapps con Truffle, angular, testrpc, bootstrap...

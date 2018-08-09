@@ -1,0 +1,31 @@
+Cluster cuyo stake sirve de respaldo para timestampear txs
+Los clusters deben estar bien sincronizados intra e inter cluster
+Tienen el CGGTTS para la sincronización y de respaldo para el pequeño error que cometan
+Un cluster solo podrá timestampear txs en relación a su stake y al value de la tx
+En caso de actuar maliciosamente se utilizará su stake
+
+Al igual que se timestampean txs se podría extrapolar a bloques
+Se iría organizando en capas
+
+ejemplo
+
+Cliente manda 3 txs (2 conflictivas entre sí y una tercera no conflictiva)
+Las txs llegan a los cluster timestampeadores que las sellaraán con su timestamp
+Los cluster pueden timestampear txs en relación al stake que tengan 
+Los cluster tienen una buena sincro respaldada por el CGGTTS y la trazabilidad de su tiempo a UTC
+Supongamos que de las 3 txs las 2 conflictivas han sido enviadas a cluster distintos (aún no se ha detectado el conflicto)
+Tras pasar por los clusters las txs salen con un timestamp asociado y firmados por el cluster
+Tras esto pasarían a un pool de txs
+En el pool va a haber un MECANISMO que detecte txs procedentes de las mismas kpublicas
+Una vez detectado se comprueba si son conflictivas
+1-no son conflictivas:se manda confirmación para ambas
+2-son conflictivas: según el timestamp se descarta una y se envía confirmación para otra
+En nuestro ejemplo el cliente recibiría confirmación para la tx no conflictiva y para 1 de las conflictivas
+La otra sería descartada
+Una vez el cliente ha recibido la confirmación del pool la tx cuenta como realizada (aunque aun no se ha incluido en la cadena de bloques)
+Si se manda confirmación esa tx queda escrita en piedra, cuidado con esto, qué pasa si llega despues una conflictiva con timestamp menor? No se debería enviar confirmación pero a ver cómo se hace todo esto.....
+Supuesto que todas las capas anteriores funcionan perfectamente y se ha conseguido lo que se quería
+Se tendría ahora un pool de txs no conflictivas
+Los nodos de la capa encargados de crear los bloques tendrían que ir cogiendo txs del pool, formar el bloque, pasarlo a cluster de timestampeado de bloques(?), y transmitirlo a todos los demás para que se cree la cadena
+PoW? PoS? Las txs ya están confirmadas de antes...habrá recompensa?
+Los timestampers de las txs serían el ordering service en HyperledgerFabric (?)

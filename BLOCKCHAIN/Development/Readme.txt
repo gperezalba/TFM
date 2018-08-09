@@ -19,11 +19,19 @@ truffle init
 //INSTALL ETH TEST RPC
 npm install -g ethereumjs-test
 
-//PROJECT FROM TRUFFLE BOX
-truffle unbox pet-shop
-
 //TESTRPC NETWORK
 testrpc
+
+//ALTERNATIVA A TESTRPC ES GANACHE
+ganache-cli 
+o
+Iniciar Ganache-1.2.1.appx que tiene interfaz
+
+//PROJECT FROM TRUFFLE BOX
+truffle unbox pet-shop
+truffle unbox Quintor/angular-truffle-box
+
+o elegir cualquier otro de: https://truffleframework.com/boxes
 
 truffle migrate
 
