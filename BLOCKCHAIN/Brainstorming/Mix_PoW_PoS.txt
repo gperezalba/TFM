@@ -5,10 +5,3 @@ De entre los elegidos antes, o se elige 1 (PoS) o se hace con PoW con una dificu
 Ese límite superior es tratado en el paper: http://groups.csail.mit.edu/tds/papers/Lynch/jacm88.pdf
 Se podría incrementar la conectividad de todos los nodos no elegidos con los nodos elegidos (ya que uno de ellos minará el siguiente bloque)
 Si se incrementa todos van a conocer el siguiente bloque con un delay muy pequeño y cuando se empiece el proceso de nuevo para minar el siguiente bloque todos tendrán la misma cadena
-
-
-Plasma Channel mixed with Quorum
-En los plasma channel (creo) los dos unicos nodos que participan son los involucrados en las txs
-Se podría incluir un tercer (e incluso cuarto...) nodo y esos 3 mediante un smart contract lanzarían un token privado para ese canal
-Esos 3 nodos correrían el protocolo quorum permitiendo un throughput alto
-Cuando se quiera cerrar el canal se hace el traspaso del estado resultante final de quorum al equivalente del token de la main blockchain (p.e Ethereum)

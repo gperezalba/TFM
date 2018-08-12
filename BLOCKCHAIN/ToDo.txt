@@ -1,0 +1,28 @@
+12/08/2018
+
+Acabar curso StackSkills
+	-Controlar Solidity a fondo
+	-Ver todos los posibles ataques a SCs
+	-SC para la trazabilidad
+	-Metodología clara para una Dapp
+	-API para CGGTTS y SC
+(Final de agosto)
+
+Cada dos semanas Googlear acerca de:
+	-Trazabilidad de tiempo en Blockchain
+	-Timestamp en blockchain
+	-Delay/Latency en blockchain
+	-Blockchain as a source of time
+	-Time based SmartContracts
+	-SmartContract time oraculo
+
+Todos los domingos Brainstorming
+	-Cómo conseguir fuente de tiempo descentralizada
+	-Cómo conseguir que los SCs se activen en el tiempo sin alguien que lo haga
+	-Blockchain por capas
+	-PoTraceability
+
+Cuando acabe curso y tenga APIs:
+	-volver a PoS
+	-Casper+Sharding
+	-Plasma
