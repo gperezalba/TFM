@@ -2,10 +2,14 @@
 
 Acabar curso StackSkills
 	-Controlar Solidity a fondo
+	-Ver a fondo código de SmartWallet de Mist
+	-Ver a fondo código de Exchange
 	-Ver todos los posibles ataques a SCs
 	-SC para la trazabilidad
 	-Metodología clara para una Dapp
 	-API para CGGTTS y SC
+	-Hacer el DV de StackSkills
+
 (Final de agosto)
 
 Cada dos semanas Googlear acerca de:
