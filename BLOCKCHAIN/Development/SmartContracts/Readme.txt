@@ -1,0 +1,10 @@
+Iniciar nodo con geth
+Deploy contrato con Mist o desde la consola js de geth con el codigo web3deploy.js
+
+Iteracción con SC
+var MyContract = web3.eth.contract([ { "constant": true, "inputs": [ { "name": "ownerAddress", "type": "address" } ], "name": "getDataArray", "outputs": [ { "name": "", "type": "bytes32[]" } ], "payable": false, "stateMutability": "view", "type": "function", "signature": "0x53a2635e" }, { "constant": true, "inputs": [ { "name": "id", "type": "uint256" }, { "name": "ownerAddress", "type": "address" } ], "name": "getData", "outputs": [ { "name": "", "type": "bytes32" } ], "payable": false, "stateMutability": "view", "type": "function", "signature": "0x7e0d168a" }, { "constant": true, "inputs": [ { "name": "data", "type": "bytes32" }, { "name": "ownerAddress", "type": "address" } ], "name": "validateHash", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "stateMutability": "view", "type": "function", "signature": "0x8b00ac37" }, { "constant": true, "inputs": [], "name": "owner", "outputs": [ { "name": "", "type": "address", "value": "0x646Fe623EEFf9e7A41388915c4181F2477e5583a" } ], "payable": false, "stateMutability": "view", "type": "function", "signature": "0x8da5cb5b" }, { "constant": false, "inputs": [ { "name": "newAddress", "type": "address" } ], "name": "addMember", "outputs": [ { "name": "", "type": "bool" } ], "payable": false, "stateMutability": "nonpayable", "type": "function", "signature": "0xca6d56dc" }, { "constant": false, "inputs": [ { "name": "data", "type": "bytes32" } ], "name": "updateData", "outputs": [ { "name": "length", "type": "uint256" } ], "payable": false, "stateMutability": "nonpayable", "type": "function", "signature": "0xcdf7f8e6" }, { "inputs": [], "payable": false, "stateMutability": "nonpayable", "type": "constructor", "signature": "constructor" }, { "payable": true, "stateMutability": "payable", "type": "fallback" } ]);
+
+var MyContractInstance = MyContract.at('0x17d541b8...');
+
+personal.unlockAccount(eth.accounts[1]);
+MyContractInstance.updateData('0x17d541b8...', {from: eth.accounts[1], gas:3000000});

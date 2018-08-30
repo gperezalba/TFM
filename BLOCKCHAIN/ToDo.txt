@@ -1,7 +1,7 @@
 12/08/2018
 
 Acabar curso StackSkills
-	-Controlar Solidity a fondo
+	-Controlar Solidity a fondo (Repasar: Function Types, Arrays.Members el ej final, kecca256 y abi.encode, multiple inheritance)
 	-Ver a fondo código de SmartWallet de Mist
 	-Ver a fondo código de Exchange
 	-Ver todos los posibles ataques a SCs
@@ -25,6 +25,7 @@ Todos los domingos Brainstorming
 	-Cómo conseguir que los SCs se activen en el tiempo sin alguien que lo haga
 	-Blockchain por capas
 	-PoTraceability
+	-Cómo conseguir que otro peer evalue/valide tu sincronización, es decir de tu trazabilidad de tiempo
 
 Cuando acabe curso y tenga APIs:
 	-volver a PoS

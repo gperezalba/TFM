@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-//import "mortal.sol";
+//import "./mortal.sol";
 
 contract ContractStructure {
 
