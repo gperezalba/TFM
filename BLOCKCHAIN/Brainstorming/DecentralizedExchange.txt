@@ -1,0 +1,8 @@
+Hay un order book descentralizado
+Manejado por varios nodos validadores
+dichos nodos validadores son los encargados de ejecutar las ordenes
+para que el orden sea preciso deben estar sincronizados
+la idea es que no sea tan importante estar cerca del exchange o bolsa?
+un exchange estara sincronizado con un error a utc que diga CGGTTS
+habria que asegurarse de que corre ese código, SGXintel? auditorías?...
+timestampean las ordenes

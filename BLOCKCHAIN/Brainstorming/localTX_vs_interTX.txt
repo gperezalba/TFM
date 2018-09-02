@@ -1,0 +1,7 @@
+Con sharding se crean varias cadenas que deben ponerse de acuerdo entre sí
+En este protocolo se diferenciarían tx locales o cuando por ejemplo entras a un establecimiento en el que vas a pagar
+y txs en las que el dinero lo vas a transferir a la otra parte del mundo
+consiste en que las partes involucradas estén siempre en el mismo shard
+la mayoría de txs se realizaran a gente que este cerca tuya, al pagar en un bar/tienda etc
+En caso de que vayas a hacer una transfer a china pues requeriría de un pequeño tiempo para incluir ambas partes en el mismo shard
+ese tiempo es seguro menor al de una transferencia actual, no sería instantanea pero si rapida

@@ -8,7 +8,7 @@ Acabar curso StackSkills
 	-SC para la trazabilidad
 	-Metodología clara para una Dapp
 	-API para CGGTTS y SC
-	-Hacer el DV de StackSkills
+	-Hacer el CV de StackSkills
 
 (Final de agosto)
 
@@ -29,5 +29,7 @@ Todos los domingos Brainstorming
 
 Cuando acabe curso y tenga APIs:
 	-volver a PoS
+	-Papers de BFT
+	-Cardano y concord!
 	-Casper+Sharding
 	-Plasma

@@ -4,3 +4,5 @@ El fundador de Zcash opina que será difícil a largo plazo oponerse a los ASIC
 Cree en la descentralización de los ASIC de manera democrática como herramienta crucial
 ¿Se podría estandarizar un tipo de ASIC, instalarlo en Ayuntamientos p.e y que su código no se pudiese tocar?
 Es decir un ASIC cuyo modus operanding no se pudiese alterar, con un log de todo lo que hace (trazabilidad tiempo incluida)
+con SGX de intel por ejemplo?
+
