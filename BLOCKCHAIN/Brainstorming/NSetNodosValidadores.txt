@@ -1,0 +1,6 @@
+Leer a fondo tema BFT
+Ver cuantos nodos componen el set de nodos en permisionadas
+Me da la sensación de que en las permisionadas actuales el set de nodos validadores es muy pequeño
+Y que no se puede hacer más grande ya que deja de ser BFTolerant
+En caso de ser así ver si se puede hacer algo para aumentar el N nodos_validadores
+Sería un paso importante para permisionadas ya que dentro de ser permisionadas aumentaría su descentralización y por ende la confianza en estas.
