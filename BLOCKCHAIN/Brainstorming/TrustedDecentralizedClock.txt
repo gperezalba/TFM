@@ -1,0 +1,5 @@
+Con IntelSGX (o similar) se asegura que la lectura sea del reloj local sin modificar
+El reloj se calibra en base al algoritmo R2CGGTTS
+Para asegurarnos del buen comportamiento se habilita un método de penalización con un sistema similar al RoughTime de Google
+
+Esto podría ser una capa de sincronización para una blockchain

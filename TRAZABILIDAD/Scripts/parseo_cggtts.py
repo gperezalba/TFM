@@ -17,4 +17,4 @@ for i in range(20,len(texto)):
     REFSV = remove_none_elements_from_list(texto[i].split(' '))
     traz.write(REFSV[7]+", ")
     
-traz.close()
+traz.close()	
