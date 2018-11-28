@@ -1,8 +1,20 @@
-Julio:
--Contexto de BTC, ETH (PoS, Sharding) y Permisionadas
--Conseguir ejecutar correctamente R2CGGTTS
 
-Agosto:
--API Blockchain
--Pruebas con R2CGGTTS
--Acabar curso SmartContracts StackSkills
+DONE:
+
+- SmartContract + API. Listo para descargar Testnet y Deploy el SC
+- Búsqueda + lectura de info
+
+
+TO DO:
+
+- CORREGIR ERROR R2CGGTTS Y DEJARLO FUNCIONANDO
+- TRUSTZONE:
+	Acabar de leer todas las guías, PDFs etc
+	Escribir .c a ejecutar en Secure World
+		Entrada: TX/Paquete
+		Añadir info de Trazabilidad de tiempo (ejecutar R2CGGTTS si no se dispone de la info ya)
+		Añadir Timestamp
+		Salida: Kpriv(Hash(Tx+Trazabilidad+Timestamp))
+	Corroborar Xilinx Zynq 7000
+- ESCRIBIR CONTEXTO HISTÓRICO
+
