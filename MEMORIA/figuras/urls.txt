@@ -7,3 +7,6 @@ Figura 6: https://bitcoin.org/bitcoin.pdf
 
 Figura inteseccion 2 esferas: http://www.gnss.be/how_tutorial.php
 Figura tierra4esfera: http://www.gnss.be/how_tutorial.php
+Figura 2clockscompare: http://www.gnss.be/time.php
+commonview y allinview: training2012gnss.pdf
+cggtts: training2012gnss.pdf
