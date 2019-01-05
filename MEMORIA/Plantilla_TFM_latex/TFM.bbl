@@ -1,0 +1,50 @@
+\begin{thebibliography}{1}
+
+\bibitem{blockchaininfo}
+Blockchain explorer.
+\newblock \url{https://www.blockchain.com/explorer}.
+
+\bibitem{gnss}
+Royal observatory of belgium gnss research group.
+\newblock \url{http://www.gnss.be/}.
+
+\bibitem{trustzone}
+ARM.
+\newblock Building a secure system using trustzone technology.
+\newblock
+  \url{https://www.bipm.org/ws/CCTF/TAI_TRAINING/Allowed/Fundamentals/Training-2012-GNSS-Defraigne.pdfhttp://infocenter.arm.com/help/topic/com.arm.doc.prd29-genc-009492c/PRD29-GENC-009492C_trustzone_security_whitepaper.pdf},
+  2008.
+
+\bibitem{forks}
+Roger~Wattenhofer Christian~Decker.
+\newblock Information propagation in the bitcoin network.
+\newblock \url{https://ieeexplore.ieee.org/document/6688704}, 2013.
+
+\bibitem{timetransfer}
+Pascale Defraigne.
+\newblock Gnss time transfer.
+\newblock
+  \url{https://www.bipm.org/ws/CCTF/TAI_TRAINING/Allowed/Fundamentals/Training-2012-GNSS-Defraigne.pdf},
+  2012.
+
+\bibitem{criptoanarquista}
+Timothy~C. May.
+\newblock The cyphernomicon.
+\newblock \url{http://www.kreps.org/hackers/overheads/11cyphernervs.pdf}, 1994.
+
+\bibitem{business}
+William Mougayar.
+\newblock {\em The Business Blockchain: Promise, Practice, and Application of
+  the Next Internet Technology}.
+
+\bibitem{bitcoin}
+Satoshi Nakamoto.
+\newblock Bitcoin: A peer-to-peer electronic cash system.
+\newblock \url{https://bitcoin.org/bitcoin.pdf}, 2008.
+
+\bibitem{ghost}
+Yonatan Sompolinsky and Aviv Zohar.
+\newblock Secure high-rate transaction processing in bitcoin.
+\newblock \url{https://fc15.ifca.ai/preproceedings/paper_30.pdf}.
+
+\end{thebibliography}
