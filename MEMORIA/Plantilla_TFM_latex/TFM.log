@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6930 64-bit) (preloaded format=pdflatex 2019.1.5)  6 JAN 2019 09:15
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6930 64-bit) (preloaded format=pdflatex 2019.1.5)  6 JAN 2019 17:50
 entering extended mode
 **./TFM.tex
 (TFM.tex
@@ -813,13 +813,27 @@ LaTeX Info: Redefining \% on input line 76.
 [19 <./imagenes/minninpools.PNG>]
 LaTeX Info: Redefining \. on input line 82.
 LaTeX Info: Redefining \% on input line 82.
- [20]) (capitulos/02_EstadoDeLaTecnica.tex
+ [20]
+Underfull \hbox (badness 10000) in paragraph at lines 85--86
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--88
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--90
+
+ []
+
+LaTeX Info: Redefining \. on input line 92.
+LaTeX Info: Redefining \% on input line 92.
+[21]) (capitulos/02_EstadoDeLaTecnica.tex
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
-
-[21] [22
-
-]
+ [22]
 Cap\'{\i }tulo 2.
 
 Underfull \hbox (badness 10000) in paragraph at lines 4--5
@@ -831,13 +845,15 @@ Underfull \hbox (badness 10000) in paragraph at lines 6--7
 
  []
 
-<imagenes/interseccion2esferas.PNG, id=256, 324.71312pt x 309.155pt>
+<imagenes/interseccion2esferas.PNG, id=258, 324.71312pt x 309.155pt>
 File: imagenes/interseccion2esferas.PNG Graphic file (type png)
 <use imagenes/interseccion2esferas.PNG>
 Package pdftex.def Info: imagenes/interseccion2esferas.PNG  used on input line 
 12.
 (pdftex.def)             Requested size: 360.0pt x 342.77457pt.
-[23]
+[23
+
+]
 Underfull \hbox (badness 10000) in paragraph at lines 16--17
 
  []
@@ -852,7 +868,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 18--19
 
  []
 
-<imagenes/tierra4esfera.PNG, id=262, 321.70187pt x 230.8625pt>
+<imagenes/tierra4esfera.PNG, id=264, 321.70187pt x 230.8625pt>
 File: imagenes/tierra4esfera.PNG Graphic file (type png)
 <use imagenes/tierra4esfera.PNG>
 Package pdftex.def Info: imagenes/tierra4esfera.PNG  used on input line 22.
@@ -891,7 +907,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 39--40
 
  []
 
-<imagenes/2clockscompare.PNG, id=277, 528.47438pt x 292.59312pt>
+<imagenes/2clockscompare.PNG, id=279, 528.47438pt x 292.59312pt>
 File: imagenes/2clockscompare.PNG Graphic file (type png)
 <use imagenes/2clockscompare.PNG>
 Package pdftex.def Info: imagenes/2clockscompare.PNG  used on input line 43.
@@ -904,7 +920,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 50--51
 LaTeX Info: Redefining \. on input line 51.
 LaTeX Info: Redefining \% on input line 51.
 [26]
-<imagenes/commonview.PNG, id=284, 552.0625pt x 356.33125pt>
+<imagenes/commonview.PNG, id=286, 552.0625pt x 356.33125pt>
 File: imagenes/commonview.PNG Graphic file (type png)
 <use imagenes/commonview.PNG>
 Package pdftex.def Info: imagenes/commonview.PNG  used on input line 54.
@@ -914,7 +930,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 59--60
 
  []
 
-<imagenes/allinview.PNG, id=286, 558.58687pt x 371.3875pt>
+<imagenes/allinview.PNG, id=288, 558.58687pt x 371.3875pt>
 File: imagenes/allinview.PNG Graphic file (type png)
 <use imagenes/allinview.PNG>
 Package pdftex.def Info: imagenes/allinview.PNG  used on input line 63.
@@ -944,7 +960,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 74--75
 
  []
 
-<imagenes/cggtts.PNG, id=305, 541.02126pt x 387.94937pt>
+<imagenes/cggtts.PNG, id=307, 541.02126pt x 387.94937pt>
 File: imagenes/cggtts.PNG Graphic file (type png)
 <use imagenes/cggtts.PNG>
 Package pdftex.def Info: imagenes/cggtts.PNG  used on input line 78.
@@ -978,7 +994,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 119--120
 
  []
 
-<imagenes/PrevHashes.PNG, id=327, 842.1864pt x 322.3242pt>
+<imagenes/PrevHashes.PNG, id=329, 842.1864pt x 322.3242pt>
 File: imagenes/PrevHashes.PNG Graphic file (type png)
 <use imagenes/PrevHashes.PNG>
 Package pdftex.def Info: imagenes/PrevHashes.PNG  used on input line 123.
@@ -1026,7 +1042,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 201--202
 
  []
 
-<imagenes/bloque.PNG, id=367, 468.75125pt x 130.98938pt>
+<imagenes/bloque.PNG, id=369, 468.75125pt x 130.98938pt>
 File: imagenes/bloque.PNG Graphic file (type png)
 <use imagenes/bloque.PNG>
 Package pdftex.def Info: imagenes/bloque.PNG  used on input line 205.
@@ -1097,7 +1113,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 268--269
 
  []
 
-<imagenes/trilemma2.PNG, id=406, 817.1328pt x 412.9026pt>
+<imagenes/trilemma2.PNG, id=408, 817.1328pt x 412.9026pt>
 File: imagenes/trilemma2.PNG Graphic file (type png)
 <use imagenes/trilemma2.PNG>
 Package pdftex.def Info: imagenes/trilemma2.PNG  used on input line 272.
@@ -1117,7 +1133,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 285--286
 LaTeX Info: Redefining \. on input line 286.
 LaTeX Info: Redefining \% on input line 286.
 [42 <./imagenes/trilemma2.PNG>]
-<imagenes/ataque.jpg, id=417, 536.0025pt x 266.9975pt>
+<imagenes/ataque.jpg, id=419, 536.0025pt x 266.9975pt>
 File: imagenes/ataque.jpg Graphic file (type jpg)
 <use imagenes/ataque.jpg>
 Package pdftex.def Info: imagenes/ataque.jpg  used on input line 292.
@@ -1153,7 +1169,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 356--357
 
  []
 
-<imagenes/monitor.jpg, id=441, 478.78876pt x 259.46938pt>
+<imagenes/monitor.jpg, id=443, 478.78876pt x 259.46938pt>
 File: imagenes/monitor.jpg Graphic file (type jpg)
 <use imagenes/monitor.jpg>
 Package pdftex.def Info: imagenes/monitor.jpg  used on input line 361.
@@ -1173,7 +1189,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 374--375
 LaTeX Info: Redefining \. on input line 375.
 LaTeX Info: Redefining \% on input line 375.
 [47 <./imagenes/monitor.jpg>]
-<imagenes/secureSO.jpg, id=458, 584.68437pt x 347.2975pt>
+<imagenes/secureSO.jpg, id=460, 584.68437pt x 347.2975pt>
 File: imagenes/secureSO.jpg Graphic file (type jpg)
 <use imagenes/secureSO.jpg>
 Package pdftex.def Info: imagenes/secureSO.jpg  used on input line 384.
@@ -1190,7 +1206,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 397--399
 
  []
 
-<imagenes/secureboot.jpg, id=467, 463.23062pt x 389.95688pt>
+<imagenes/secureboot.jpg, id=469, 463.23062pt x 389.95688pt>
 File: imagenes/secureboot.jpg Graphic file (type jpg)
 <use imagenes/secureboot.jpg>
 Package pdftex.def Info: imagenes/secureboot.jpg  used on input line 402.
@@ -1213,7 +1229,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 5--6
 
  []
 
-<imagenes/figura1.PNG, id=490, 571.13374pt x 388.45125pt>
+<imagenes/figura1.PNG, id=492, 571.13374pt x 388.45125pt>
 File: imagenes/figura1.PNG Graphic file (type png)
 <use imagenes/figura1.PNG>
 Package pdftex.def Info: imagenes/figura1.PNG  used on input line 9.
@@ -1224,7 +1240,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 13--14
  []
 
 [53]
-<imagenes/figura2.PNG, id=497, 586.69188pt x 388.95313pt>
+<imagenes/figura2.PNG, id=499, 586.69188pt x 388.95313pt>
 File: imagenes/figura2.PNG Graphic file (type png)
 <use imagenes/figura2.PNG>
 Package pdftex.def Info: imagenes/figura2.PNG  used on input line 17.
@@ -1240,12 +1256,12 @@ Underfull \vbox (badness 1902) has occurred while \output is active []
 LaTeX Info: Redefining \. on input line 22.
 LaTeX Info: Redefining \% on input line 22.
  [54 <./imagenes/figura1.PNG>]
-<imagenes/figura3.PNG, id=505, 546.04pt x 389.95688pt>
+<imagenes/figura3.PNG, id=507, 546.04pt x 389.95688pt>
 File: imagenes/figura3.PNG Graphic file (type png)
 <use imagenes/figura3.PNG>
 Package pdftex.def Info: imagenes/figura3.PNG  used on input line 26.
 (pdftex.def)             Requested size: 360.0pt x 257.09862pt.
-<imagenes/figura5.PNG, id=508, 578.66188pt x 327.72438pt>
+<imagenes/figura5.PNG, id=510, 578.66188pt x 327.72438pt>
 File: imagenes/figura5.PNG Graphic file (type png)
 <use imagenes/figura5.PNG>
 Package pdftex.def Info: imagenes/figura5.PNG  used on input line 34.
@@ -1286,31 +1302,31 @@ Underfull \hbox (badness 10000) in paragraph at lines 47--48
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
  [58]
-Underfull \hbox (badness 10000) in paragraph at lines 12--17
+Underfull \hbox (badness 10000) in paragraph at lines 16--21
 \OT1/cmtt/m/n/10.95 / / www . bipm . org / ws / CCTF / TAI _ TRAINING / Allowed
  / Fundamentals /
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 12--17
+Underfull \hbox (badness 10000) in paragraph at lines 16--21
 \OT1/cmtt/m/n/10.95 Training-[]2012-[]GNSS-[]Defraigne . pdfhttp : / / infocent
 er .
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 12--17
+Underfull \hbox (badness 10000) in paragraph at lines 16--21
 \OT1/cmtt/m/n/10.95 arm . com / help / topic / com . arm . doc . prd29-[]genc-[
 ]009492c /
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 24--29
+Underfull \hbox (badness 10000) in paragraph at lines 28--33
 []\OT1/cmr/m/n/10.95 Pascale De-fraig-ne.  Gnss ti-me trans-fer.  []$\OT1/cmtt/
 m/n/10.95 https : / / www .
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 24--29
+Underfull \hbox (badness 10000) in paragraph at lines 28--33
 \OT1/cmtt/m/n/10.95 bipm . org / ws / CCTF / TAI _ TRAINING / Allowed / Fundame
 ntals /
  []
@@ -1338,10 +1354,10 @@ LaTeX Warning: There were multiply-defined labels.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 221.
  ) 
 Here is how much of TeX's memory you used:
- 9053 strings out of 492946
- 136217 string characters out of 3124491
- 240910 words of memory out of 3000000
- 12601 multiletter control sequences out of 15000+200000
+ 9055 strings out of 492946
+ 136234 string characters out of 3124491
+ 240938 words of memory out of 3000000
+ 12602 multiletter control sequences out of 15000+200000
  10584 words of font info for 37 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  34i,13n,43p,2373b,532s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -1355,9 +1371,9 @@ cmr10.pfb><C:/Users/Guillermo/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/pub
 lic/amsfonts/cm/cmr8.pfb><C:/Users/Guillermo/AppData/Local/Programs/MiKTeX 2.9/
 fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/Guillermo/AppData/Local/Pro
 grams/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on TFM.pdf (65 pages, 1667529 bytes).
+Output written on TFM.pdf (65 pages, 1670950 bytes).
 PDF statistics:
- 634 PDF objects out of 1000 (max. 8388607)
- 185 named destinations out of 1000 (max. 500000)
+ 638 PDF objects out of 1000 (max. 8388607)
+ 186 named destinations out of 1000 (max. 500000)
  345 words of extra memory for PDF output out of 10000 (max. 10000000)
 

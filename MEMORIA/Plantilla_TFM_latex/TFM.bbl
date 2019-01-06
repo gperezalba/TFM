@@ -1,8 +1,12 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 
 \bibitem{blockchaininfo}
 Blockchain explorer.
 \newblock \url{https://www.blockchain.com/explorer}.
+
+\bibitem{optee}
+Open portable trusted execution enviroment.
+\newblock \url{https://www.op-tee.org/}.
 
 \bibitem{gnss}
 Royal observatory of belgium gnss research group.

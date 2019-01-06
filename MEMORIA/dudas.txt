@@ -1,0 +1,12 @@
+1-Desarrollo de software confiable...
+	Lo explico con comandos? No creo
+	Explico con los pasos seguidos a modo resumen? En plan clonar repositorio optee, utilizar buildroot para crear el linux a medida, los pasos para firmar la imagen etc
+2-Idem con el apartado desarrollo de un software de análisis de trazabilidad
+	Entiendo que esto incumbe lo relacionado a como se comportará el código cuando ya esté en RPi y el resto de software que lo ejecute, tome el resultado lo parsee y timestampee el pkt
+3-Explicación de Trustzone...basicamente todo sigue la estructura y la manera de explicarlo del whitepaper de ARM
+	Solo está referenciado para las imagenes
+	Hay que indicarlo de alguna manera para el texto?
+4-Idem para las partes en las que me baso en temario de la UNIR
+	Ese temario solo está disponible para los alumnos...como lo referencio (en caso de ser necesario)?
+5-No estoy seguro de si lo que tengo en materiales y métodos es lo que se quiere
+6-Proof of Traceability lo pongo en trabajo futuro?
