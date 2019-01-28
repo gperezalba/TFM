@@ -1,0 +1,42 @@
+En motivación del proyecto Cambiar desde "El problema del mecanismo para poner en circulación..." hasta el final al estado de la técnica
+Acabar el apartado motivación diciendo que como toda nueva tecnología su interés ha ido creciendo (curva) ahora en su máximo auge pero tiene problemas 
+Usar la parte "La raiz de la mayoria..." y lo de "un sistema que se le añaden recursos y noseque no es escalable"
+usarlo es poner algo similar mas reducido que solo mencione el problema escalabidlidad y así se puede mantener el texto completo para estado tecnica
+
+En objetivos
+Intentar partir el texto en 2, una primera parte que resuma todo lo fundamental y que de paso a los objetivos. Tiene que ser bastante más corto
+Luego los objetivos por puntos. Poner muchos, muy simplificados los primeros que vayan desde la base... en plan saaber cómo de bueno es un reloj...trazabilidad tiempo
+Después otro poco texto que haga ver porqué esos objetivos solucionan problemas.
+
+En materiales y métodos no ponerse tan filosófico. Que sea más software tal bibliotecas, código de tal proyecto explicarlo pero sin dar muchas explicaciones
+Poner toooodas bibliotecas toolchain todo que se me pueda ocurrir
+Incluir figuras...una que resuma un poco cómo se aúna todo la de arm con secure world, la rpi, la cadena bloques, satélites gps un reloj utc
+Seguir el orden de los objetivos
+TRAZABILIDAD TIEMPO
+Dispositivo ublox
+Biblioteca rtklib (convbin) 
+r2cggtts
+TEE
+Zedboard...vivado, documentación xilinx
+rpi3 
+optee
+buildroot
+ptpd
+libreria de funciones trustzone
+BLOCKCHAIN
+Código de un cliente bitcoin
+
+
+En trazabilidad tiempo meter un pequeño texto introductorio antes e gnss...el tiempo es importante porque blablbalba
+
+En revisión blockchain el parrafo que hay de intro rescatar todo lo de la motivación y ahí de intro
+luego hablar de cripto
+teoría de juegos no es 2.3 es 2.2.2x
+
+En otros algoritmos de consenso y demás currarse una tabla resumen que muestre otras tecnologías como tangle y hashgraph, muestre tx/s de esas otras blockchain, de las permisionadas, se vean características en plan esta no es desentralizada, seguridad, problema
+Esa tabla es buena idea meterla en otro punto 2.5 que se centre en la escalabilidad, posibles soluciones alternativas etc
+Javier quiere traer el principio del cap 3 al 2, pero lo veo extenderse de más ahí y prefiero que este en el 3 que es donde se empieza a ver más que es trabajo mío y no paja
+
+Cambiar ARM Trustzone por TEE, hablar también de SGX de Intel y de la de AMD, mencionarlas y pasar a ARM 
+Todo este apartado llevarlo a después de traz.tiempo
+

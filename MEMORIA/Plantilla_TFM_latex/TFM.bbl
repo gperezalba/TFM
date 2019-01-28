@@ -1,22 +1,102 @@
 \begin{thebibliography}{10}
 
+\bibitem{amd}
+Amd guardmi technology.
+\newblock \url{https://www.amd.com/en/technologies/guardmi}.
+
+\bibitem{bitcoincode}
+Bitcoin repository.
+\newblock \url{https://github.com/bitcoin/bitcoin/tree/master/src}.
+
 \bibitem{blockchaininfo}
 Blockchain explorer.
 \newblock \url{https://www.blockchain.com/explorer}.
 
+\bibitem{buildroot}
+Buildroot. making embedded linux easy.
+\newblock \url{https://buildroot.org/}.
+
+\bibitem{ftpr2cggtts}
+Ftp of bureau international des poids et measures.
+\newblock \url{ftp://tai.bipm.org/soft/r2cggtts}.
+
+\bibitem{ftprob}
+Ftp of royal observatory of belgium.
+\newblock \url{ftp://gnss.oma.be/gnss/data/rinex/daily/}.
+
+\bibitem{gartner}
+Gartner hype cycle: Bitcoin.
+\newblock
+  \url{https://www.gartner.com/technology/research/methodologies/hype-cycle.jsp}.
+
+\bibitem{gnssconverter}
+Gnss converter.
+\newblock \url{https://process.gps-solutions.com/index.html}.
+
+\bibitem{hashgraph}
+The hedera hashgraph platform.
+\newblock \url{https://www.hedera.com/whitepaper}.
+
+\bibitem{intel}
+Intel software guard extensions.
+\newblock \url{https://software.intel.com/es-es/sgx}.
+
 \bibitem{optee}
 Open portable trusted execution enviroment.
-\newblock \url{https://www.op-tee.org/}.
+\newblock \url{https://github.com/OP-TEE}.
+
+\bibitem{ptpd}
+Precision time protocol daemon.
+\newblock \url{https://github.com/ptpd/ptpd}.
+
+\bibitem{xilinxguide}
+Programming arm trustzone architecture on the xilinx zynq-7000 all programmable
+  soc user guide.
+\newblock
+  \url{https://www.xilinx.com/support/documentation/user_guides/ug1019-zynq-trustzone.pdf}.
+
+\bibitem{rpi}
+Raspberry pi 3 model b.
+\newblock \url{https://www.raspberrypi.org/products/raspberry-pi-3-model-b/}.
+
+\bibitem{reportklib}
+Repositorio github rtklib.
+\newblock \url{https://github.com/tomojitakasu/RTKLIB_bin/tree/rtklib_2.4.3}.
 
 \bibitem{gnss}
 Royal observatory of belgium gnss research group.
 \newblock \url{http://www.gnss.be/}.
 
+\bibitem{rtklib}
+Rtklib: An open source program package for gnss positioning.
+\newblock \url{http://www.rtklib.com/}.
+
+\bibitem{tangle}
+The tangle whitepaper.
+\newblock
+  \url{https://assets.ctfassets.net/r1dr6vzfxhev/2t4uxvsIqk0EUau6g2sw0g/45eae33637ca92f85dd9f4a3a218e1ec/iota1_4_3.pdf}.
+
+\bibitem{ublox}
+U-blox evk-m8f.
+\newblock \url{https://www.u-blox.com/en/product/evk-8evk-m8}.
+
+\bibitem{ucenter}
+U-center, gnss evaluation software for windows.
+\newblock \url{https://www.u-blox.com/en/product/u-center}.
+
+\bibitem{vivado}
+Vivado design suite.
+\newblock \url{https://www.xilinx.com/products/design-tools/vivado.html}.
+
+\bibitem{zedboard}
+Zedboard development kit.
+\newblock \url{http://zedboard.org/product/zedboard}.
+
 \bibitem{trustzone}
 ARM.
 \newblock Building a secure system using trustzone technology.
 \newblock
-  \url{https://www.bipm.org/ws/CCTF/TAI_TRAINING/Allowed/Fundamentals/Training-2012-GNSS-Defraigne.pdfhttp://infocenter.arm.com/help/topic/com.arm.doc.prd29-genc-009492c/PRD29-GENC-009492C_trustzone_security_whitepaper.pdf},
+  \url{http://infocenter.arm.com/help/topic/com.arm.doc.prd29-genc-009492c/PRD29-GENC-009492C_trustzone_security_whitepaper.pdf},
   2008.
 
 \bibitem{forks}

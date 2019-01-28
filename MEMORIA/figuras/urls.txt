@@ -10,3 +10,5 @@ Figura tierra4esfera: http://www.gnss.be/how_tutorial.php
 Figura 2clockscompare: http://www.gnss.be/time.php
 commonview y allinview: training2012gnss.pdf
 cggtts: training2012gnss.pdf
+
+hypercycle: https://www.gartner.com/technology/research/methodologies/hype-cycle.jsp

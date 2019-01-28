@@ -1,5 +1,7 @@
 \chapter{Estado de la técnica}
 \section{Trazabilidad de tiempo}
+Una de las bases sobre las que se asienta el trabajo es la trazabilidad de tiempo. Conocer la trazabilidad de un reloj a una referencia temporal universal es esencial para tener un mecanismo objetivo con el que medir la precisión de un reloj.
+
 \subsection{Global Navigation Satellite System (GNSS)}
 La GNSS se trata de un conjunto de satélites que permiten a un usuario situado en La Tierra calcular su posición exacta de manera bastante precisas (desde algunos metros hasta centímetros de precisión). Existen varios de estos sistemas de posicionamiento, entre ellos están GPS, GLONASS, Galileo, etc. Este tipo de sistemas consisten en una constelación de satélites encargados de transmitir unas determinadas señales sobre La Tierra. Los relojes que portan dichos satélites están sincronizados en base a una escala temporal definida por el sistema propio de cada constelación. Con esto se consigue que las señales emitidas por cada satélite compartan una misma referencia temporal. Esto es vital para el buen funcionamiento del sistema. \newline
 
@@ -81,15 +83,224 @@ Los datos relacionados con los errores de sincronización aparecen en las dos co
 
 
 
+
+\section{Trusted Execution Environments (TEE)}
+
+Los dispositivos embebidos cada vez manejan datos más sensibles o de más valor. Un claro ejemplo de esto son los dispositivos que manejan datos de cuentas bancarias como contraseñas. A menudo estos dispositivos cumplen otros propósitos, por lo que tienen la capacidad de descargar otro software de terceros. Esto hace que estos dispositivos se encuentren en una posición muy vulnerable. Cuanto más valioso sea el resultado de un ataque realizado con éxito a estos dispositivos, más vulnerables serán, ya que los atacantes estarán dispuestos a emplear mayor tiempo y dinero en realizar un ataque. \newline
+
+\subsection{Intel Software Guard Extensions (Intel SGX)}
+El fabricante Intel es uno de las opciones en cuanto a TEEs. Intel denomina SGX \cite{intel} a esta tecnología que permite a los desarrolladores utilizar un entorno de ejecucion confiable a nivel de aplicación. Estos entornos se llaman enclaves y proporcionan confidencialidad e integridad, autenticación y provisión remota y una superficie de ataque pequeña.
+
+\subsection{AMD GuardMI Technology}
+La estrategia de seguridad en la que se basa AMD GuardMI Technology \cite{amd} proporciona (1) cifrado seguro y transparente de memoria, (2) arrancado seguro, (3) habilitar aplicaciones confiables y (4) un entorno seguro de producción.
+
+\subsection{ARM TrustZone}
+
+Entre todos los fabricantes posibles que soportan TEE, para este trabajo se utiliza ARM debido a los dispositivos elegidos. El objetivo de la tecnología ARM Trustzone consiste en conseguir que un dispositivo con sistema operativo completo sea a su vez robusto y seguro. Un sistema cuyo diseño de arquitectura hardware y software seguro sea el apropiado, podrá garantizar el correcto uso de datos sensibles. Para conseguir esto hardware y software deben diseñarse para trabajar en sintonía. Los dispositivos identificados como más seguros son aquellos que contienen medidas de seguridad desde su diseño y fabricación. Varias consideraciones de seguridad hardware solamente se podrán incluir en estas fases, añadirlas después será imposible. \newline
+
+La tecnología TrustZone de ARM integra varias medidas de seguridad en procesadores, buses y periféricos. Esto permitirá una gran variedad de posibilidades de arquitecturas seguras en sus dispositivos.
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/ataque.jpg}
+	\caption{\label{fig1}Escenario de ataque típico en hardware embebido \cite{trustzone}.}
+\end{figure}
+
+\subsubsection{Vectores de ataque}
+Para poder estructurar una buena defensa es necesario conocer los distintos tipos de ataque que se pueden llevar a cabo.
+
+\paragraph{Ataques Hack}
+En este tipo de ataque, el atacante solamente es capaz de ejecutar un ataque software. Engloba todo tipo de virus y malware que es descargado e instalado en el dispositivo.
+
+\paragraph{Ataques Shack}
+En este tipo de ataque, el atacante suele tener acceso físico al dispositivo y dispone de un equipamiento muy básico para llevar a cabo el ataque. Con este equipamiento podrá conectarse al dispositivo vía JTAG, escanear los periféricos de entrada y salida, y mediante analizadores de red inspeccionar buses, pines y señales del sistema. A su vez podrán reprogramar espacios de memoria, reemplazar componentes del hardware, forzar buses o pines a estar en alta o baja tensión, etc.
+
+\paragraph{Ataques de laboratorio}
+Es el tipo de ataque más invasivo, ya que el atacante dispone de equipamiento de laboratorio con el que puede llevar a cabo ingeniería inversa sobre el dispositivo. Defenderse de este tipo de ataques no suele ser la estrategia más óptima. Será mucho más óptimo limitar el daño que se pueda ocasionar una vez que el dispositivo a sufrido con éxito uno de estos ataques. El objetivo consiste en hacer el ataque de laboratorio lo menos rentable posible.
+
+\subsubsection{Seguridad en sistemas embebidos}
+Los sistemas embebidos presentan diversas dificultades a la hora de hablar de seguridad. Numerosos procesadores, buses, periféricos, espacios de memoria, etc que complican la seguridad del dispositivo. La solución que haga seguro el dispositivo debe integrar todos estos componentes, ya que no será óptimo hacer seguro cada componente por separado. \newline
+
+Existen diversas soluciones en el mercado encargadas de la seguridad de estos dispositivos.
+
+\paragraph{Módulos hardware externos de seguridad}
+Una de las soluciones de seguridad más extendida para este tipo de dispositivos consiste en integrar un módulo externo al dispositivo en el que se confíe. Un claro ejemplo de estos son las tarjetas SIM.
+
+\paragraph{Módulos hardware internos de seguridad}
+Se trata de módulos dedicados a la seguridad del dispositivo que están integrados en el mismo. En muchos escenarios este tipo de módulos resultan más convenientes. Los ejemplos más representativos de este tipo de módulos son (1) módulos que manejan las operaciones y el almacenamiento de las tareas criptográficas y (2) módulos de procesamiento de tareas sensibles.
+
+\paragraph{Virtualización software}
+La virtualización software es un mecanismo de seguridad en el que una capa de gestión, conocida como hypervisor, separa varias plataformas software independientes. Esta separación se consigue haciendo uso del Memory Management Unit (MMU). Permite que cada uno de los softwares, que corren independientes a los demás, tengan la seguridad de no poder ser atacados por software que esté separado de este.
+
+
+\subsubsection{Seguridad TrustZone}
+
+Los principales problemas que surgen con las soluciones que existen actualmente en el mercado se deben principalmente a que estos protegen un determinado componente, dato sensible o activo, pero ignorando un gran abanico de posibilidades de ataque. Esto provoca que en ocasiones se proteja lo que no se debe, o que la protección carezca de sentido. Por ejemplo, no tiene sentido proteger el módulo que gestiona y almacena las claves de criptografía si posteriormente los datos descifrados pueden ser robados fácilmente por un atacante. Esta es la razón por la que se dice que el diseño de la seguridad debe integrar el dispositivo al completo y no solamente sus componentes por separado. \newline
+
+La seguridad de TrustZone se basa en el concepto de una plataforma segura y confiable, una arquitectura hardware que extiende las funcionalidades de seguridad partiendo desde su diseño y fabricación. Si a esto se le suman ciertas metodologías y protocolos de seguridad como Secure Boot o autenticación, se mitigan gran parte de los ataques Shack y Hack. Todo esto en combinación con métodos que intentan mitigar ciertos ataques de laboratorio hacen que se tenga una solución robusta para la seguridad del dispositivo.
+
+\paragraph{Arquitectura hardware}
+El objetivo de TrustZone consiste en proporcionar una arquitectura hardware que permita que el dispositivo se ajuste a los requerimientos de seguridad de cada proyecto en lugar de aportar una solución basada en la idea de “una misma solución sirve para todo”. \newline
+
+En primer lugar, esto se consigue creando un entorno de programación que garantice la confidencialidad y la integridad de todos los datos sensibles y los proteja de la gran mayoría de posibles ataques. Para ello, se realiza un particionado de la arquitectura hardware y software en dos entornos (o mundos como se llamarán a partir de ahora), un Mundo Seguro (MS) y un Mundo Normal (MN). En el Mundo Seguro se realizará todo lo que incumba tareas o datos sensibles y en el Mundo Normal todo lo demás. La lógica hardware presente en el bus AMBA3 AXI será la encargada de hacer que ningún recurso del MS sea accedido por ningún componente del MN, creando un perímetro de seguridad. \newline
+
+Otro aspecto clave de TrustZone es la extensión que se le ha dado a los procesadores ARM. Un único procesador podrá ejecutar código tanto del MS como del MN. Esto elimina la necesidad de tener un procesador que se encargue de las tareas del MS y otro para el MN. Esta característica hará al dispositivo más eficiente. 
+Para conseguir esta separación en dos mundos, se han hecho varios cambios en algunos de los componentes de los dispositivos.
+
+
+\subparagraph{Bus AMBA3 AXI}
+A cada uno de los buses del sistema se le ha añadido una nueva señal de control tanto en los canales de lectura como en los de escritura. Estos bits, añadidos a la especificación del protocolo del bus AMBA3 AXI, se denominan bits No-Seguros.
+\begin{itemize}
+	\item AWPROT[1]: Escritura (baja es Segura y alta es No Segura).
+	\item ARPROT[1]: Lectura (baja es Segura y alta es No Segura).
+\end{itemize}
+
+Todos los buses máster enviarán esta señal cuando se quiera realizar una acción de lectura o escritura, y la lógica de los buses o esclavos debe decodificarlas e interpretarlas correctamente para asegurar que esa separación de mundos no se viola.
+
+\subparagraph{Bus periférico AMBA3 APB}
+
+Otra de las principales características de la arquitectura TrustZone consiste en la posibilidad de hacer seguros a los periféricos (controladores de interrupciones, temporizadores y dispositivos de Entrada/Salida). Esto permite una seguridad punto a punto en lugar de únicamente proporcionar una seguridad en el procesado de los datos.
+
+\subparagraph{Memoria}
+
+La inclusión del bit No-Seguro al bus se puede ver como una partición en dos de la memoria. El bit No-Seguro se considera como un 33º bit en el espacio de direcciones físicas. Se tendrá por tanto un espacio de direcciones físicas de 32 bits para las transacciones seguras y un espacio equivalente de 32 bits para las no seguras. Se debe tener especial cuidado para asegurar la integridad y coherencia de los datos en todas las localizaciones en las que se almacenen.
+
+\paragraph{Arquitectura del procesador}
+Cada uno de los procesadores físicos provee al sistema de dos procesadores virtuales, uno considerado Seguro y otro No Seguro. Además, también proporciona un mecanismo para cambiar el contexto de ejecución de manera robusta entre Seguro y No Seguro, se le denomina Modo Monitor. Dependiendo de la identidad del procesador virtual desde el que se envíe una transacción, esta será etiquetada como segura o no segura haciendo uso del bit No-Seguro. Esto facilitará la integración de los procesadores virtuales en el sistema. El procesador virtual No Seguro solamente podrá acceder a los recursos del sistema que sean no seguros. En cambio, el procesador virtual Seguro podrá acceder a todos los recursos del sistema. \newline
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/monitor.jpg}
+	\caption{\label{fig1}Estructura de un procesador físico TrustZone \cite{trustzone}.}
+\end{figure}
+
+
+Los mecanismos por los cuales el procesador físico entra en modo monitor son vistos como excepciones al software del modo monitor. La entrada al modo monitor puede estar provocada por el software que ejecuta una determinada instrucción (llamada Secure Monitor Call, SMC) o por mecanismos de excepción hardware (IRQ, FIQ, …). \newline
+
+El mundo en el que el procesador se encuentra está marcado por el bit No-Seguro en el registro Secure Configuration Register (SCR) en CP15. Cuando se encuentra en modo monitor está siempre en el MS.
+Se ha mencionado que los espacios de memoria quedan divididos de manera que la memoria está separada para los dos mundos. Esta división que ocurre en la memoria fuera del procesador, debe ocurrir también en los componentes de memoria internos al procesador como es el sistema de memoria L1. El principal componente de la memoria L1 es el Memory Management Unit (MMU). El MMU es capaz de mapear el espacio de direcciones de memoria virtual que es visto por el software ejecutándose en el procesador con el espacio de direcciones físico existente fuera del procesador. La traducción se realiza haciendo uso de una tabla de traducción controlada por software.
+En un procesador con TrustZone, el hardware proporciona dos MMUs, una para cada procesador virtual. Esto permite que cada mundo posea su propia tabla de traducción de direcciones de manear totalmente independiente.
+
+\paragraph{Arquitectura software}
+
+La implementación de un Mundo Seguro en el dispositivo requiere de un software seguro que se ejecute y haga uso de los datos sensibles que se encuentren en este. Cada desarrollador puede crear un MS que se adecúe a las necesidades y requerimientos de su sistema. \newline
+
+Existen muchas posibles arquitecturas software que podrán ser desarrolladas en el Mundo Seguro de un procesador con TrustZone habilitado. La arquitectura más compleja que se puede alojar en un MS es un sistema operativo. La más sencilla es una librería de código alojada en el MS. Entre estos dos extremos existen un gran abanico de posibilidades intermedias.
+
+
+\subparagraph{Sistema operativo} 
+Un sistema operativo dedicado en el MS es un diseño complejo pero que abre un gran abanico de posibilidades. Puede simular la ejecución concurrente de varias aplicaciones del MS, descargar nuevas aplicaciones seguras y otro tipo de tareas seguras que serán totalmente independientes del MN. Cada procesador virtual tendrá un sistema operativo completo y se comportará como tal.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/secureSO.jpg}
+	\caption{\label{fig1}Esquema de un SO sobre el Mundo Seguro \cite{trustzone}.}
+\end{figure}
+
+\subparagraph{Librería de código}
+Muchos casos de uso no justificarán la complejidad de un sistema operativo en el MS ya que sus requerimientos son mucho menores. Una sencilla librería de código que ejecute una tarea en el MS puede ser suficiente para muchos casos de uso. Esta librería se ejecutará mediante las pertinentes llamadas realizadas desde el sistema operativo del MN. El MS es por tanto un esclavo del MN ya que el MS no se podrá ejecutar independientemente.
+
+\paragraph{Arrancado de un sistema seguro}
+Uno de los puntos más críticos de un sistema seguro es el arrancado. Muchos de los ataques se centran en la modificación del sistema cuando este se encuentra apagado. Por ejemplo, reemplazar la imagen del MS que se encuentra en la memoria flash del dispositivo con una imagen del MS modificada. Por tanto, para que el sistema no sea vulnerable se deberá comprobar la autenticidad del código en el tiempo de arranque. La estrategia que se sigue consiste en una cadena de confianza para el software del mundo seguro que partirá de un punto difícilmente manipulable. Esto se corresponderá con una determinada secuencia de arrancado.
+
+\subparagraph{Secuencia de arrancado}
+Cuando el dispositivo se enciende, un procesador con TrustZone habilitado siempre comienza en el Mundo Seguro. Esto permite que se puedan realizar diversas comprobaciones de seguridad antes de que el Mundo Seguro arranque y tenga alguna oportunidad de modificar algún aspecto del sistema.\newline
+
+La figura XXXXXXXXXXXXx muestra una típica secuencia de arrancado. Tras encender el dispositivo se suele ejecutar un código que se encuentra en la ROM del dispositivo y que será el encargado de inicializar periféricos críticos del dispositivo. Este da paso a un código de arranque de segundo nivel que se encuentra en la memoria no-volátil externa del dispositivo. La secuencia continuará avanzando hasta que se haya completado el arranque del Mundo Seguro. Posteriormente se da paso al Mundo Normal y una vez este se haya completado se puede decir que el sistema se está ejecutando correctamente.
+Para que esta secuencia tenga sentido se deben añadir comprobaciones criptográficas en cada fase del arrancado seguro. Cada fase de la secuencia realizará una comprobación de la integridad de la siguiente fase a ejecutar. Se previene así que arranque cualquier tipo de código malicioso no autorizado o modificado. \newline
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/secureboot.jpg}
+	\caption{\label{fig1}Secuencia de arrancado seguro \cite{trustzone}.}
+\end{figure}
+
+Para esta tarea se utiliza un algoritmo de cifrado de clave asimétrica, RSA-PSS (Rivest, Shamir and Adleman – Probabilistic Signature Scheme). En este protocolo, un vendedor de confianza generará una firma del código que se quiere desplegar haciendo uso de su clave privada. Esta firma irá incluida en el binario del software. La clave pública del vendedor se almacenará en el dispositivo en alguno de sus registros dedicados a este propósito que no podrán ser alterados. Esta clave pública se utilizará para verificar que el binario proporcionado por el vendedor no ha sido modificado, por ello se necesita que esta clave pública no pueda ser modificada por una propiedad de un atacante.
+Se crea por tanto una cadena de confianza que nace en un componente del dispositivo en el que se confía. A partir de este se podrá autenticar cualquier otro componente o software antes de que sea ejecutado. Una vez que se ha ejecutado la autenticación de la primera fase de la secuencia, las próximas autenticaciones de la secuencia podrán ser realizadas con claves públicas diferentes. Solamente la autenticación de la primera fase debe realizarse con la clave que se encuentra en los registros One-Time-Programmable (OTP) del dispositivo.
+
+
+
+
+
+
+
+
+
+
 \section{Revisión de tecnologías Blockchain}
+En este apartado se describen (1) la historia y el conjunto de hitos más importantes que dan origen al proyecto Bitcoin y la tecnología blockchain y (2) las bases sobre las que se asienta el protocolo blockchain y su funcionamiento.
 
-En el apartado de Introducción se ha dado una visión muy general de cómo surgió blockchain y de sus hitos más importantes. La explicación de las redes blockchain ha sido tan simple como ha sido posible para entender la motivación y los objetivos del proyecto. Sin embargo, es necesario conocer con más detalle el funcionamiento y las posibilidades que ofrecen los distintos tipos de redes blockchain para la correcta comprensión del trabajo. Notar que, pese a que la explicación se realizará en base a la blockchain de Bitcoin, la explicación es extensible a la gran mayoría de redes blockchain.\newline
+\subsection{Origen e historia}
+La tecnología blockchain garantiza el correcto funcionamiento de los aspectos clave de las criptomonedas: la puesta en circulación de la moneda y el mecanismo de gasto que garantiza que una moneda no pueda ser gastada varias veces. Anteriores monedas digitales habían intentado resolver estos dos problemas sin éxito. El proyecto Bitcoin, cuya base tecnológica es blockchain, es la primera criptomoneda capaz de resolverlos de manera totalmente descentralizada. \newline
 
-\subsection{Criptografía}
+Es vital para cualquier moneda digital que la emisión de la misma sea predecible y constante en el tiempo. La solución al problema del mecanismo para poner en circulación una moneda digital tiene su origen en el proyecto de Adam Back llamado HashCash. El proyecto tenía como objetivo combatir el correo spam haciendo uso de la técnica conocida como prueba de trabajo. La prueba de trabajo consiste en un problema matemático de resolución compleja pero cuya verificación es muy sencilla. El aspecto clave de la prueba de trabajo radica en que la dificultad del problema a resolver se puede ajustar. La regulación de la dificultad de la prueba de trabajo es el mecanismo por el cual se consigue ajustar la puesta en circulación. Las redes blockchain que hacen uso de la prueba de trabajo permiten que el usuario que antes resuelva uno de estos problemas emita (ponga en circulación) una determinada cantidad de nuevas monedas. El resto de usuarios de la red procederá a la sencilla verificación de la solución del problema antes de comenzar a buscar la solución a otro de estos problemas. \newline
+
+El segundo aspecto vital para una criptomoneda es conseguir un mecanismo de gasto que garantice que una moneda no pueda ser gastada varias veces. Para resolver el segundo problema se necesita que los usuarios de la red sean capaces de conocer el último estado consensuado de la blockchain. Gracias a esto, los usuarios de la red serán capaces de determinar sin un usuario de la red es el poseedor de cierta moneda o no. En otras palabras, los usuarios de la red pueden verificar si un usuario en concreto está realizando un doble gasto de una determinada moneda o no. El trabajo del investigador Nick Szabo sobre la tolerancia a fallos bizantinos se convierte en la pieza clave para que los usuarios de la red lleguen al consenso sobre el último estado global de la blockchain. \newline
+
+XXXXXXXXXXXXXTema 1 Alberto Toribio Intro a blockchain curso UNIR \newline
+
+La tecnología blockchain permite a los usuarios de la red tener un registro válido, inalterable y consensuado de todas las transacciones realizadas. Los bloques de la cadena contienen la información relativa a esas transacciones, es por esto que a menudo se denomina a la blockchain como libro contable distribuido.\newline
+
+El 3 de enero de 2009 Satoshi Nakamoto crea el primer bloque de la cadena de Bitcoin conocido como bloque génesis. Desde ese momento se han estado creando nuevos bloques de la cadena y nuevos bitcoins ininterrumpidamente. Sin embargo, la popularidad de Bitcoin no ha sido la misma desde entonces. Durante los primeros años sufrió varios altibajos tanto en popularidad como en precio. Como se observa en la figura XXXXXXXX, no fue hasta finales de 2017 cuando su popularidad y precio comenzaron a incrementarse de manera exponencial. Entre 2009 y 2017 surgen muchas otras criptomonedas y proyectos basados en Bitcoin y blockchain.\newline
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/market-price-(usd).jpeg}
+	\caption{\label{fig1}Precio Bitcoin \cite{blockchaininfo}.}
+\end{figure}
+
+El proyecto con mayor repercusión que hizo ver las posibilidades que ofrecía la tecnología blockchain más allá de Bitcoin fue Ethereum. El proyecto Ethereum, bajo el liderazgo de Vitalik Buterin, surge en 2014 con el objetivo de crear una nueva red blockchain. La red Ethereum, además de registrar todas las transacciones de su propia moneda digital (el Ether), registra pequeños programas informáticos llamados Smart Contracts. Los usuarios de la red, además de estar de acuerdo en las transacciones que se realizan en la red, deben estar de acuerdo en los despliegues de los Smart Contracts y de los resultados de la ejecución de los mismos. Con los resultados de la ejecución de los Smart Contracts ocurre exactamente igual que con las transacciones de monedas, si la mayoría de la red está de acuerdo (hay consenso) el resultado pasa automáticamente a ser válido. \newline
+
+El nombre de Smart Contract puede llevar a equivocación. Los Smart Contracts no extienden todas las capacidades o características de un contrato convencional. Son programas informáticos que permiten programar una serie de instrucciones máquina propias de su máquina virtual (Ethereum Virtual Machine, EVM) para interaccionar con los datos que residen en memoria. Por lo tanto, la clase de tareas que podrán realizar los Smart Contracts será muy limitada. \newline
+
+Uno de los principales usos de los Smart Contracts es la creación de tokens. Un token es una unidad de valor que una organización crea para gobernar su modelo de negocio y dar más poder a sus usuarios para interactuar con sus productos, al tiempo que facilita la distribución y reparto de beneficios entre todos sus accionistas \cite{business}. El Smart Contract asociado a un determinado token será el encargado de programar el registro y la interacción que se tenga con el token en cuestión. En definitiva, se tendría un pequeño libro contable creado sobre un gran libro contable (la blockchain) [XXXXXtema 1 UNIR]. \newline
+
+La tokenización de activos abre un gran abanico de posibilidades, siendo su mayor práctica las ICOs (Initial Coin Offering). Permite una nueva forma de financiación a nuevas empresas. Consiste en la preventa de su propia moneda digital o token en representación de los servicios que dicha empresa prestará en el futuro. En el 2017 la financiación obtenida por empresas que han realizado esta oferta inicial de moneda supera los 5000 millones de euros [XXXXXbuscar dato real]. \newline
+
+Tras toda esta serie de puntos de inflexión que han marcado el avance de la tecnología blockchain, es necesario citar los principales problemas, aún por resolver, entre los cuales se encuentra la principal motivación de este trabajo. \newline
+
+La raíz de la mayoría de problemas está en la prueba de trabajo. La dificultad de los problemas de la prueba de trabajo se ajusta constantemente para hacer que el tiempo que empleará el poder computacional de todos los usuarios de la red en resolver el problema sea constante. Este tiempo tiene que ser suficiente para que la solución al problema hallada por un usuario sea difundida a la mayoría de usuarios y se adquiera el consenso. Este tiempo dependerá de las características de la red blockchain en cuestión. Cada solución a un problema permite que se añada un nuevo bloque a la cadena que contendrá la información relacionada con las transacciones realizadas. Cada bloque tiene un tamaño máximo que dependerá de cada red blockchain. Se tendrá por tanto un tiempo de creación y un tamaño máximo prefijado. Esto se traduce en una tasa máxima de transacciones por segundo (tx/s) para cada blockchain. Notar que la dificultad de la prueba de trabajo se ajusta en base al poder computacional agregado de todos los usuarios para que el tiempo sea constante. Esto significa que no por añadir más poder computacional a la red se incrementará el número de transacciones por segundo. Se observa en la figura XXXXXXXx como la dificultad de la prueba de trabajo de Bitcoin ha ido aumentando en el tiempo de manera similar a su precio y popularidad. Esto se debe a que conforme crecía el interés por la criptomoneda se incrementaba el poder de cómputo proporcionado por los usuarios a la red.\newline
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/difficulty.jpeg}
+	\caption{\label{fig1}Dificultad de la prueba de trabajo Bitcoin \cite{blockchaininfo}.}
+\end{figure}
+
+En la figura XXXXXXXX se observan el número de transacciones confirmadas por día entre 2017 y 2019, años en los que se observa el mayor incremento en la dificultad de la prueba de trabajo. Este incremento de poder de cómputo (traducido en incremento de la dificultad de la prueba de trabajo), no se traduce en un claro incremento en el número de transacciones por día.\newline
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/confirmed-transactions-per-day.jpeg}
+	\caption{\label{fig1}Número de transacciones Bitcoin confirmadas por día \cite{blockchaininfo}.}
+\end{figure}
+
+Si un sistema no aumenta su rendimiento cuando se le añaden más recursos al mismo se dice de este que no es escalable. Es por esto que las redes blockchain basadas en prueba de trabajo son ineficientes por diseño. En base a la definición que se tiene, no se podrá conseguir que sea escalable como tal. Sin embargo, se podrán realizar cambios en el protocolo para hacer que sea lo más eficiente posible. Estos cambios en el protocolo que hagan que se consiga la máxima eficiencia posible están aún por descubrir y diseñar. \newline
+
+La falta de escalabilidad da paso a otro de los principales problemas, el desperdicio de energía eléctrica. La reciente popularidad de las criptomonedas y las redes blockchain ha atraído el interés de muchas personas. Cada vez son más los usuarios que suman su poder computacional a la red con el objetivo de resolver los problemas de la prueba de trabajo. Sin embargo, el protocolo define que el tiempo empleado por el poder computacional agregado de todos los usuarios sea aproximadamente el mismo siempre. En otras palabras, si se aumenta el poder computacional de la red, aumentará también la dificultad de la prueba de trabajo para que entre todos tarden ese tiempo constante en resolverla. Este aumento de la dificultad se traducirá en un aumento de la energía eléctrica empleada en resolver la prueba de trabajo. El resultado siempre será la creación de un nuevo bloque de la cadena cada cierto intervalo de tiempo, la consecuencia directa que cuánto más poder computacional tenga la red, más energía eléctrica se empleará en el proceso. Existe mucha controversia acerca de si en realidad se trata de un desperdicio de energía eléctrica o no. Sin embargo, este debate no es el tema de este trabajo.
+Cuando un usuario encuentra solución a la prueba de trabajo, este obtiene la capacidad de crear cierta cantidad de nuevas monedas que se autoasignará. Esto ha provocado la creación de grupos que aúnan todo su poder computacional en un mismo usuario para así aumentar la posibilidad de encontrar la solución a la prueba de trabajo recibir estas nuevas monedas creadas que posteriormente repartirán entre todos. Surge así un nuevo problema que atenta contra la descentralización de la red. En redes como la de Bitcoin, casi la totalidad de los nuevos bloques son incluidos a la cadena por tres de estos grupos como se observa en la figura XXXXXXXXXXXXXX. Se podría decir que estos tres grupos gobiernan la blockchain de Bitcoin. A esto se le suma que, si uno de estos grupos adquiere al menos el 51\% del poder computacional de la red, este podrá incluir las transacciones (válidas o inválidas) que desee a su antojo. Esto se conoce como el ataque del 51\% y es posible ya que este grupo haría que la mayoría de la red esté en consenso. En la figura XXXXXXXXXXXXXX se observa el porcentaje de éxito de cada uno de estos grupos durante el día 1 de enero de 2019. Notar que esta distribución se puede considerar constante durante el último año. \newline
+
+La gran cantidad de inconvenientes aún por solventar o mejorar motivan este trabajo. En el siguiente apartado se definirá más concretamente el problema que se pretende atajar en el trabajo y los objetivos del mismo.\newline
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/minninpools.PNG}
+	\caption{\label{fig1}Porcentaje de pruebas de trabajo resueltas por cada grupo \cite{blockchaininfo}.}
+\end{figure}
+
+
+\subsection{Funcionamiento}
+
+En el apartado de Origen e Historia se ha dado una visión muy general de cómo surgió blockchain y de sus hitos más importantes. La explicación de las redes blockchain ha sido tan simple como ha sido posible para entender la motivación y los objetivos del proyecto. Sin embargo, es necesario conocer con más detalle el funcionamiento y las posibilidades que ofrecen los distintos tipos de redes blockchain para la correcta comprensión del trabajo. Notar que, pese a que la explicación se realizará en base a la blockchain de Bitcoin, la explicación es extensible a la gran mayoría de redes blockchain.\newline
+
+\subsubsection{Criptografía}
 
 La criptografía pese a ser prácticamente transparente para el usuario, juega un papel fundamental en la actualidad. Acciones tan cotidianas como enviar un correo electrónico o pagar con tarjeta de crédito funcionan gracias a la criptografía. La criptografía aporta seguridad a estos procedimientos. ¿Por qué se confía en la criptografía? La criptografía se basa en una ciencia exacta, como son las matemáticas, y en algoritmos muy estudiados por la comunidad científica. Varios de estos algoritmos de la criptografía son usados en la tecnología blockchain para aportar seguridad. Son esenciales para su correcto funcionamiento.\newline
 
-\subsubsection{Las funciones Hash}
+\paragraph{Las funciones Hash}
 La traducción al castellano de blockchain es cadena de bloques. En este apartado se explica la metodología que se sigue para que los bloques de información queden encadenados y cuál es el objetivo de esto.
 Una función hash es una función unidireccional. Las funciones unidireccionales se definen como:\newline
 
@@ -107,7 +318,7 @@ Existen numerosas funciones hash. Sin embargo, para que una función hash se con
 
 En definitiva, las funciones hash permiten obtener un identificador único de un mensaje. Identificador a partir del cual no se podrá obtener el mensaje original y que garantiza la integridad del mismo. Este aspecto es lo que hace a las funciones hash indispensables para blockchain.
 
-\paragraph{Aplicación de las funciones Hash a Blockchain}
+\subparagraph{Aplicación de las funciones Hash a Blockchain}
 Una cadena de bloques se origina a partir de un primer bloque, el bloque génesis. Se pretende que todos los bloques que se vayan añadiendo a la cadena estén enlazados de alguna manera inequívoca con todos los bloques previos hasta llegar al génesis. Esto se consigue con las funciones hash siguiendo la siguiente metodología desde el bloque génesis:
 
 \begin{enumerate}
@@ -124,7 +335,7 @@ Con este procedimiento se consigue que el hash de un bloque N de la cadena ident
 	\caption{\label{fig1}Estructura de hashes de Blockchain. XXX}
 \end{figure}
 
-\subsubsection{Criptografía de clave asimétrica}
+\paragraph{Criptografía de clave asimétrica}
 En 1976 Diffie y Hellman proponen un nuevo método para la distribución de claves. El propósito de este método era permitir a dos extremos de una comunicación establecer una clave simétrica sin que estos hayan tenido un contacto previo o usen un canal seguro. Esta propuesta daba solución al intercambio de claves simétricas, pero no permitía el cifrado. Sin embargo, este método dio origen un año después al primer algoritmo de cifrado de clave asimétrica. En 1977 nace el algoritmo RSA de la mano de Rivest, Shamir y Adleman. Este es uno de los algoritmos más utilizados incluso a día de hoy. RSA permite no sólo el cifrado sino también la firma digital. \newline
 
 La principal innovación que introduce este tipo de criptografía es el uso de un par de claves. Se tendrá una clave pública y una clave privada. Como su propio nombre indica, la clave pública será conocida por todos, en cambio la clave privada sólo la debe conocer su propietario. De esta manera deja de ser necesario el intercambio de una clave simétrica a través de un canal seguro.
@@ -172,18 +383,20 @@ La mejor forma de observar el uso que se hace de este par de claves es describir
 
 El paso 4 resulta crucial ya que de él se obtiene la identificación y el no repudio de la transacción. Resulta evidente que la criptografía de clave asimétrica es idónea y totalmente necesaria para el correcto funcionamiento de cualquier red blockchain.
 
-\section{Teoría de juegos}
+\subsubsection{Teoría de juegos}
 La teoría de juegos es una rama de las matemáticas aplicada que analiza la toma de decisiones en situaciones en las que la decisión no sólo se basa en el punto de vista de un jugador, sino teniendo en cuenta las decisiones tomadas por el resto de jugadores. Se entiende por juego una situación en la que un jugador podrá obtener recompensas o perjuicios según la decisión que hayan tomado él mismo y el resto de jugadores. \newline
 
 El concepto relacionado con la teoría de juegos más importante para blockchain es el equilibrio de Nash. Este concepto, creado por John Nash, afirma que, si todos los jugadores siguen una estrategia óptima, ningún jugador saldrá beneficiado si cambia individualmente su estrategia. El equilibrio de Nash está directamente relacionado con la expresión “Si la mayoría de los usuarios de la red actúa correctamente la blockchain funcionará correctamente”. Ciertos usuarios de la red podrían intentar hacer trampa incluyendo bloques a la cadena sin resolver la prueba de trabajo, incluir transacciones inválidas, etc. Sin embargo, blockchain está diseñada para que se mantenga el equilibrio de Nash. Si se incluye un bloque válido encima de uno inválido, este pasa automáticamente a ser inválido también. Por lo tanto, la estrategia que les interesa a los usuarios es actuar de manera correcta y elegir la situación más estable. Se mantendrá el equilibrio de Nash mientras la mayoría de los usuarios actúen de manera honesta. Si usuarios con más de la mitad del poder computacional de la red deciden actuar de manera deshonesta, el equilibrio de Nash pasará a localizarse del lado de los usuarios deshonestos y la blockchain pasará a estar corrompida. Esta es la explicación del famoso ataque del 51\%.
 
-\section{Aspectos clave del protocolo Blockchain}
-\subsection{Concepto de minado}
+\subsection{Aspectos clave del protocolo Blockchain}
+Una vez se tiene la base matemática de la base de las tecnologías que combina blockchain se explican las partes más relevantes del protocolo.
+
+\subsubsection{Concepto de minado}
 Hasta este apartado se había descrito la red blockchain como una red P2P formada por usuarios. Se utiliza el termino usuario por simplicidad. En este apartado se explica en qué consiste la minería de bloques en blockchain y quienes son los que la realizan. \newline
 
 En realidad, la red blockchain la componen una serie de nodos denominados mineros. Los usuarios simplemente son los encargados de enviar sus propias transacciones a la red cuando lo deseen. La tarea de los mineros consiste en minar bloques que contengan transacciones con el objetivo de obtener una recompensa. Minar un bloque es como se denomina al acto de resolver la prueba de trabajo descrita de manera simplificada en el APARTADO XXXXXXXXXXXXXxxX.
 
-\subsubsection{Prueba de trabajo}
+\paragraph{Prueba de trabajo (Proof of Work(PoW))}
 En el apartado XXXXXXXXxx se describe la prueba de trabajo como un problema de solución muy compleja, pero de verificación muy sencilla. Existen multitud de problemas matemáticos que se podrían utilizar para la prueba de trabajo de blockchain. El problema elegido para blockchain es el cálculo de un resumen hash con una característica determinada. El hash que sirva de solución a la prueba de trabajo de un bloque debe tener una determinada cantidad de ceros (‘000…’) al principio. La cantidad de ceros estará determinada por la dificultad, que a su vez está marcada por la cantidad de poder computacional total de la red. El resumen hash se calcula al bloque que se pretende incluir en cadena de bloques.
 Por lo tanto, los pasos que deberá seguir un minero que pretende resolver la prueba de trabajo y minar un nuevo bloque son los siguientes:
 \begin{enumerate}
@@ -197,7 +410,7 @@ Por lo tanto, los pasos que deberá seguir un minero que pretende resolver la pr
 
 Este es el algoritmo que deberá seguir todo minero para minar un nuevo bloque. Notar que es en los puntos 4, 5 y 6 donde se emplea la gran parte del poder de cómputo para el minado.
 
-\subsubsection{Creación de un bloque válido}
+\paragraph{Creación de un bloque válido}
 En el algoritmo que debe seguir un minero para minar un nuevo bloque se observa que el segundo paso es crear un nuevo bloque válido a incluir en la cadena. Para entender en qué consiste este paso en detalle es necesario saber de qué está compuesto un bloque.\newline 
 
 \begin{figure}
@@ -214,7 +427,7 @@ La validación de las transacciones consiste básicamente en dos pasos:
 	\item Comprobar que esa clave privada realmente posee la cantidad de moneda digital que pretende transferir.
 \end{enumerate}
 
-\subsection{Validez de la cadena de bloques}
+\subsubsection{Validez de la cadena de bloques}
 En ninguno de los procesos seguidos en las redes blockchain se puede olvidar que se trata de una red distribuida P2P compuesta por nodos desconocidos. No se tiene la certeza de que los nodos con los que se interactúe estén actuando de manera honesta. Puede ocurrir que un nuevo nodo quiera entrar a formar parte de la red blockchain. Este nuevo nodo desconoce totalmente lo sucedido en la cadena de bloques anteriormente así que debe pedirla a varios de los nodos que ya forman parte de la red. Si cada uno de los usuarios a los que solicita la cadena de bloques le proporciona una cadena de bloques distinta, este nuevo nodo deberá saber cuál elegir por sí mismo. \newline
 
 De entre todas las posibles cadenas, la cadena válida (y en la que se encuentra el equilibrio de Nash) se determinará llevando a cabo el siguiente procedimiento:
@@ -227,7 +440,7 @@ De entre todas las posibles cadenas, la cadena válida (y en la que se encuentra
 
 La situación planteada no solamente se puede dar cuando un nuevo nodo quiere entrar a formar parte de la red. Otro caso en el que se puede dar es cuando varios mineros minan un bloque en un tiempo similar y cada uno transmite su bloque minado desde un punto distinto de la red. Un nodo intermedio puede recibir varias cadenas de bloques distintas y deberá elegir la cadena válida en base al procedimiento planteado. Cuando se mina un bloque simultáneamente en dos puntos de la red y ambas cadenas llegan a un nodo intermedio se dice que se ha producido un fork. Un fork no es más que una cadena de bloques cuyo bloque sucesor pueden ser varios bloques durante un pequeño espacio de tiempo hasta que se consigue el consenso.
 
-\subsection{Incentivo}
+\subsubsection{Incentivo}
 
 En el algoritmo descrito en la sección XXXXXXXXXXXXXXXx se menciona que los últimos 3 pasos son los que consumen gran cantidad de poder computacional y por ende de energía eléctrica. Estos mineros están trabajando para el correcto funcionamiento de la red, y por supuesto no lo hacen de manera altruista. Invierten dinero en hardware específico para minado y en energía eléctrica a cambio de una recompensa. \newline
 
@@ -236,13 +449,13 @@ En el apartado XXXXXXXXXxx se describe la estructura de un bloque. Uno de los ca
 Además de esta recompensa, es posible que las transacciones añadan un campo con una pequeña comisión que también se lleva el minero. Se hace uso de esta comisión en las ocasiones en las que la red está colapsada, haciendo que los mineros elijan estas transacciones antes que otras sin comisión. Notar que el bloque tiene un tamaño máximo y no se pueden incluir todas las transacciones que se deseen.
 
 
-\subsection{Otros algoritmos de consenso}
+\subsubsection{Otros algoritmos de consenso}
 
 Uno de los factores más importantes y que no se puede descuidar de la blockchain es el consenso. La historia que se escribe en la cadena de bloques debe ser común para todos los nodos. La prueba de trabajo es un algoritmo de consenso que consigue que en la cadena de bloques se vayan incluyendo transacciones en un orden lógico y sin que se produzca doble gasto con ninguna de ellas. Puede ocurrir que las transacciones se inserten en la cadena de bloques en un orden temporal distinto al orden en el que se realizaron, pero esto no importa. Lo único que importa para los mineros es que sean transacciones válidas en relación a los bloques anteriores, y todo lo que ocurra que no quede registrado en la cadena carecerá de validez para ellos. \newline
 
 La mayoría de redes blockchain utilizan como algoritmo de consenso la prueba de trabajo. Sin embargo, este algoritmo de consenso no es el único que existe. En la sección XXXXXXXXXXXXXXXXXXx se explica por qué la prueba de trabajo se ha convertido en un impedimento para la escalabilidad. La comunidad blockchain se ha dado cuenta de esto y se han desarrollado otra serie de algoritmos de consenso, algunos de los cuales se encuentran en producción, y la mayoría en desarrollo.
 
-\subsubsection{Prueba de participación}
+\paragraph{Prueba de participación (Proof of Stake (PoS))}
 Existe un enfoque que no se ha visto sobre la prueba de trabajo y por qué la red de Bitcoin no ha sido aún corrompida. Si un minero decide realizar un ataque de más del 51\% de poder de cómputo a la red, estaría consiguiendo minar todos los bloques (llevándose todas las recompensas) e insertando todas las transacciones (válidas o inválidas) que desee. Sin embargo, si esto ocurre estaría consiguiendo apropiarse de una cantidad de moneda digital que carecerá de valor, ya que toda la red puede observar este ataque y ver que la cadena de bloques ha sido corrompida. Los mineros que se llevan recompensas son los primeros interesados en que la red funcione honestamente y que se siga manteniendo el equilibrio de Nash para que la moneda digital siga teniendo valor. \newline
 
 La idea de la prueba de participación es en el fondo similar. Los nodos que más cantidad de moneda digital poseen serán los más interesados en que la red siga funcionando de manera honesta y la moneda digital asociada a esta mantenga su valor. Por esto, estos nodos serán los encargados de hacer que en la cadena de bloques se inserten solamente transacciones válidas. \newline
@@ -250,18 +463,21 @@ La idea de la prueba de participación es en el fondo similar. Los nodos que má
 El protocolo se basa en la cantidad de monedas que tenga cada participante que quiera validar nuevos bloques. En lugar de minar un bloque se utiliza validar un bloque para referirse al acto de crear un nuevo bloque aceptado por el resto de la red. Cada nodo que quiera entrar a formar parte del grupo de nodos validadores debe demostrar la cantidad de monedas que posee. Para ello, sus fondos quedarán “bloqueados” tanto tiempo como permanezcan al grupo de validadores. De entre todos los participantes que pertenezcan al grupo de validadores, un participante tendrá una probabilidad de ser el validador del siguiente bloque proporcional a los fondos que ha dejado “bloqueados”. Es decir, se elegirá al validador del siguiente bloque aleatoriamente con una probabilidad igual a la prueba de participación que ese participante haya demostrado tener. Es por esto por lo que se dice que los que más cantidad de monedas tengan serán los encargados de velar por el correcto funcionamiento de la cadena de bloques.
 Este algoritmo está aún en fase de desarrollo, principalmente por una red blockchain llamada Ethereum. Esta red blockchain se explica en el apartado XXXXXXXXXXXXXXXXXxxx.
 
-\subsubsection{Prueba de tiempo expirado}
+\paragraph{Prueba de tiempo expirado (Proof of Elapsed Time (PoET))}
 El objetivo final de los algoritmos de consenso es elegir de manera distribuida a uno de entre todos los nodos para que se encargue de crear el siguiente bloque de la cadena. En la prueba de trabajo se hace demostrando que se ha empleado cierto poder de cómputo y en la prueba de participación demostrando que se posee cierta cantidad de moneda. En este algoritmo se hace demostrando que tu procesador ha estado cierto tiempo aleatorio (sobre el que el usuario no tiene el control) durmiendo. Este algoritmo está aún en fase de desarrollo. Fue ideado por Intel aprovechando una de las características de algunos de sus procesadores llamada Trusted Execution Enviroment. El usuario no podrá interactuar con el software que se ejecute en ese ambiente de ejecución. \newline
 
 Estos son solo algunos de los algoritmos de consenso más llamativos del panorama actual. Existen otros muchos también en fase de desarrollo. El único que está demostrando conseguir el consenso en una red blockchain pública (DIFERENCIA ENTRE PUBLICAS Y PRIVADAS VER APTDO XXXXXXXXXX) de manera segura es la prueba de trabajo, pese a los inconvenientes que suscita.
 
-\subsection{Redes blockchain públicas y permisionadas}
+\subsubsection{Redes blockchain públicas y permisionadas}
 Hasta el momento no se ha hecho mención a la diferencia entre las redes blockchain públicas y las permisionadas. Las redes objetivo del presente trabajo son las redes públicas como Bitcoin o Ethereum, pero conviene conocer en qué consisten las permisionadas ya que el trabajo puede tener aplicación también en estas. En una red blockchain pública, cualquiera puede empezar a formar parte de la red sin más. No será tan sencillo en las permisionadas. \newline
 
 Tras la aparición en 2014 de Ethereum y sus Smart Contracts, varias empresas ven cómo blockchain podría aportar valor a sus empresas facilitando el manejo de información. Hasta ese momento cuando varias empresas colaboraban entre sí en algún proceso, cada una gestionaba por separado la información relacionada con el mismo. Procesos de conciliación eran necesarios para cerciorarse de que la información que cada empresa tenía estaba en sintonía. Ciertas empresas consideran que esto puede cambiar con blockchain. Deciden crear consorcios con el objetivo de gestionar una red blockchain propia en la que almacenar de forma compartida esa información común y así agilizar muchos procesos.
 Estas nuevas redes blockchain se denominan permisionadas (o privadas en algunos casos). El término permisionada hace referencia a que, a diferencia de las redes públicas, es necesario que el resto de la red identifique a un nodo y lo autorice a participar antes de que este forme parte de la red. Esto se debe a que la información que se maneja en esta red puede ser sensible o confidencial para unas cuantas empresas. En estas redes blockchain se abre la posibilidad de que ciertas transacciones de información sean privadas y sólo unos cuantos puedan verlas. Otro de los aspectos claves de este tipo de redes blockchain es el rendimiento. Se pueden conseguir tasas de transacciones por segundo mucho mayores que las que se consiguen en las públicas. Esto se consigue a costa de cambios en el protocolo que hacen a esta red menos segura, ya que sólo ciertos nodos serán los encargados de incluir bloques a la cadena. Al tratarse de nodos identificados y autorizados esta disminución en la seguridad es tolerable. La elección entre pública o permisionada dependerá de la aplicación que se le quiera dar, las prestaciones que se necesiten y del ambiente en el que se ejecute (público o privado). \newline
 
 Dos claros ejemplos de redes blockchain permisionadas son Hyperledger Fabric de IBM y un consorcio de empresas españolas llamado Alastsria.
+
+\section{El problema de escalabilidad de Blockchain}
+Desde que surge el protocolo blockchain para Bitcoin, continuamente han estado apareciendo nuevos tipos de protocolos blockchain y de alternativas a blockchain. La gran mayoría de novedades se centran en mejorar la escalabilidad y la eficiencia (en términos de transacciones por segundo soportadas). Esto deja claro que la mayoría de usos a los que se desea aplicar requieren protocolos más eficientes.
 
 \subsection{El Trilema}
 
@@ -273,138 +489,29 @@ En el apartado XXXXXXX sobre redes blockchain permisionadas se ha visto como est
 	\caption{\label{fig1}El Trilema de Blockchain. XXX}
 \end{figure}
 
-Las redes blockchain tienes 3 aspectos fundamentales a tener en cuenta: seguridad, descentralización y escalabilidad. El problema se denomina trilema porque los protocolos blockchain desarrollados hasta el momento sólo son capaces de ofrecer 2 de estos aspectos poniendo en compromiso al restante. Redes blockchain públicas como la de Bitcoin o Ethereum ofrecen seguridad y descentralización a costa de no ser sistemas escalables. Redes blockchain permisionadas como las de IBM o Alastria ofrecen escalabilidad y seguridad a costa de la descentralización (ya que sólo ciertos nodos elegidos incluyen bloques a la cadena).
-Actualmente no existe ningún protocolo blockchain que no comprometa alguno de estos aspectos clave. Conseguir solucionar el problema de la descentralización en las redes permisionadas es imposible por definición. Así que los mayores esfuerzos se centran en atajar el problema de la escalabilidad en redes públicas para intentar solucionarlo o al menos mejorar el rendimiento lo máximo posible.
+Las redes blockchain tienes 3 aspectos fundamentales a tener en cuenta: seguridad, descentralización y escalabilidad. El problema se denomina trilema porque los protocolos blockchain desarrollados hasta el momento sólo son capaces de ofrecer 2 de estos aspectos poniendo en compromiso al restante. Redes blockchain públicas como la de Bitcoin o Ethereum ofrecen seguridad y descentralización a costa de no ser sistemas escalables. Redes blockchain permisionadas como Hyperledger Fabric o Alastria ofrecen escalabilidad y seguridad a costa de la descentralización (ya que sólo ciertos nodos elegidos incluyen bloques a la cadena).
+Actualmente no existe ningún protocolo blockchain que no comprometa alguno de estos aspectos clave. Conseguir solucionar el problema de la descentralización en las redes permisionadas es imposible por definición, pese a esto existen muchos casos de uso en las que las redes blockchain permisionadas aportan valor. La otra opción es atajar el problema de la escalabilidad en redes públicas para intentar solucionarlo o al menos mejorar el rendimiento lo máximo posible. Esta última opción consiste en mejorar el algoritmo PoW o crear nuevos algoritmos de consenso.
+
+\subsection{Alternativas a Blockchain}
+Todos los esfuerzos no se ponen en intentar mejorar blockchain, al mismo tiempo surgen tecnologías alternativas a blockchain como Tangle o Hashgraph.
+
+\subsubsection{Tangle}
+Se denomina Tangle a la estructura de datos que soporta a IOTA \cite{tangle}. IOTA es un proyecto que crea una criptomoneda con especial propósito para dispositivos IoT. La estructura de datos de Tangle consiste en un grafo de transacciones al que se irán añadiendo nuevas transacciones. Cada vez que se quiere añadir una nueva transacción es necesario validar dos transacciones anteriores. Necesita por tanto un gran volumen de transacciones para su correcto funcionamiento y seguridad, es por esto por lo que se pretende que su principal caso de uso sean los dispositivos IoT. \newline
+
+Sin embargo, el proyecto IOTA está en desarrollo ya que hay dudas al respecto de su seguridad. Para que el protocolo sea seguro necesita un alto volumen de transacciones, las cuales ahora mismo no existen, así que se hace uso de un ente centralizado que valida transacciones regularmente. Otra de las dudas surge cuando en su \textit{whitepaper} asume que no existe entidad que pueda generar tal número de transacciones como para llevar a cabo un ataque en el que valida sus propias transacciones a su antojo. Dichos problemas estaban presentes al momento de iniciar el presente trabajo. Detrás del proyecto IOTA existe un gran número de desarrolladores que trabajan para solucionar dichos inconvenientes y llevar a cabo el proyecto con éxito.
+
+\subsubsection{Hashgraph}
+La tecnología Hashgraph \cite{hashgraph} parece durante un tiempo que puede dejar obsoleta a blockchain. Una alternativa de consenso que utiliza un \textit{gossip protocol} promete soportar unas 250 mil transacciones por segundo. Sin emgargo, la comunidad inmediatamente se percata de que Hashgraph solamente tiene cabida en una red permisionada y que si se intentase desplegar en una red pública tendría los mismos problemas que blockchain. Por esto se dice que Hashgraph debe ser comparada con las redes blockchain permisionadas. \newline
 
 
-
-\section{ARM TrustZone}
-
-Los dispositivos embebidos cada vez manejan datos más sensibles o de más valor. Un claro ejemplo de esto son los dispositivos que manejan datos de cuentas bancarias como contraseñas. A menudo estos dispositivos cumplen otros propósitos, por lo que tienen la capacidad de descargar otro software de terceros. Esto hace que estos dispositivos se encuentren en una posición muy vulnerable. Cuanto más valioso sea el resultado de un ataque realizado con éxito a estos dispositivos, más vulnerables serán, ya que los atacantes estarán dispuestos a emplear mayor tiempo y dinero en realizar un ataque. \newline
-
-El objetivo de la tecnología ARM Trustzone consiste en conseguir que un dispositivo con sistema operativo completo sea a su vez robusto y seguro. Un sistema cuyo diseño de arquitectura hardware y software seguro sea el apropiado, podrá garantizar el correcto uso de datos sensibles. Para conseguir esto hardware y software deben diseñarse para trabajar en sintonía. Los dispositivos identificados como más seguros son aquellos que contienen medidas de seguridad desde su diseño y fabricación. Varias consideraciones de seguridad hardware solamente se podrán incluir en estas fases, añadirlas después será imposible. \newline
-
-La tecnología TrustZone de ARM integra varias medidas de seguridad en procesadores, buses y periféricos. Esto permitirá una gran variedad de posibilidades de arquitecturas seguras en sus dispositivos.
-
-
-\begin{figure}
-	\centering
-	\includegraphics[width=1\textwidth]{imagenes/ataque.jpg}
-	\caption{\label{fig1}Escenario de ataque típico en hardware embebido \cite{trustzone}.}
-\end{figure}
-
-\subsection{Vectores de ataque}
-Para poder estructurar una buena defensa es necesario conocer los distintos tipos de ataque que se pueden llevar a cabo.
-
-\subsubsection{Ataques Hack}
-En este tipo de ataque, el atacante solamente es capaz de ejecutar un ataque software. Engloba todo tipo de virus y malware que es descargado e instalado en el dispositivo.
-
-\subsubsection{Ataques Shack}
-En este tipo de ataque, el atacante suele tener acceso físico al dispositivo y dispone de un equipamiento muy básico para llevar a cabo el ataque. Con este equipamiento podrá conectarse al dispositivo vía JTAG, escanear los periféricos de entrada y salida, y mediante analizadores de red inspeccionar buses, pines y señales del sistema. A su vez podrán reprogramar espacios de memoria, reemplazar componentes del hardware, forzar buses o pines a estar en alta o baja tensión, etc.
-
-\subsubsection{Ataques de laboratorio}
-Es el tipo de ataque más invasivo, ya que el atacante dispone de equipamiento de laboratorio con el que puede llevar a cabo ingeniería inversa sobre el dispositivo. Defenderse de este tipo de ataques no suele ser la estrategia más óptima. Será mucho más óptimo limitar el daño que se pueda ocasionar una vez que el dispositivo a sufrido con éxito uno de estos ataques. El objetivo consiste en hacer el ataque de laboratorio lo menos rentable posible.
-
-\subsection{Seguridad en sistemas embebidos}
-Los sistemas embebidos presentan diversas dificultades a la hora de hablar de seguridad. Numerosos procesadores, buses, periféricos, espacios de memoria, etc que complican la seguridad del dispositivo. La solución que haga seguro el dispositivo debe integrar todos estos componentes, ya que no será óptimo hacer seguro cada componente por separado. \newline
-
-Existen diversas soluciones en el mercado encargadas de la seguridad de estos dispositivos.
-
-\subsubsection{Módulos hardware externos de seguridad}
-Una de las soluciones de seguridad más extendida para este tipo de dispositivos consiste en integrar un módulo externo al dispositivo en el que se confíe. Un claro ejemplo de estos son las tarjetas SIM.
-
-\subsubsection{Módulos hardware internos de seguridad}
-Se trata de módulos dedicados a la seguridad del dispositivo que están integrados en el mismo. En muchos escenarios este tipo de módulos resultan más convenientes. Los ejemplos más representativos de este tipo de módulos son (1) módulos que manejan las operaciones y el almacenamiento de las tareas criptográficas y (2) módulos de procesamiento de tareas sensibles.
-
-\subsubsection{Virtualización software}
-La virtualización software es un mecanismo de seguridad en el que una capa de gestión, conocida como hypervisor, separa varias plataformas software independientes. Esta separación se consigue haciendo uso del Memory Management Unit (MMU). Permite que cada uno de los softwares, que corren independientes a los demás, tengan la seguridad de no poder ser atacados por software que esté separado de este.
-
-
-\subsection{Seguridad TrustZone}
-
-Los principales problemas que surgen con las soluciones que existen actualmente en el mercado se deben principalmente a que estos protegen un determinado componente, dato sensible o activo, pero ignorando un gran abanico de posibilidades de ataque. Esto provoca que en ocasiones se proteja lo que no se debe, o que la protección carezca de sentido. Por ejemplo, no tiene sentido proteger el módulo que gestiona y almacena las claves de criptografía si posteriormente los datos descifrados pueden ser robados fácilmente por un atacante. Esta es la razón por la que se dice que el diseño de la seguridad debe integrar el dispositivo al completo y no solamente sus componentes por separado. \newline
-
-La seguridad de TrustZone se basa en el concepto de una plataforma segura y confiable, una arquitectura hardware que extiende las funcionalidades de seguridad partiendo desde su diseño y fabricación. Si a esto se le suman ciertas metodologías y protocolos de seguridad como Secure Boot o autenticación, se mitigan gran parte de los ataques Shack y Hack. Todo esto en combinación con métodos que intentan mitigar ciertos ataques de laboratorio hacen que se tenga una solución robusta para la seguridad del dispositivo.
-
-\subsubsection{Arquitectura hardware}
-El objetivo de TrustZone consiste en proporcionar una arquitectura hardware que permita que el dispositivo se ajuste a los requerimientos de seguridad de cada proyecto en lugar de aportar una solución basada en la idea de “una misma solución sirve para todo”. \newline
-
-En primer lugar, esto se consigue creando un entorno de programación que garantice la confidencialidad y la integridad de todos los datos sensibles y los proteja de la gran mayoría de posibles ataques. Para ello, se realiza un particionado de la arquitectura hardware y software en dos entornos (o mundos como se llamarán a partir de ahora), un Mundo Seguro (MS) y un Mundo Normal (MN). En el Mundo Seguro se realizará todo lo que incumba tareas o datos sensibles y en el Mundo Normal todo lo demás. La lógica hardware presente en el bus AMBA3 AXI será la encargada de hacer que ningún recurso del MS sea accedido por ningún componente del MN, creando un perímetro de seguridad. \newline
-
-Otro aspecto clave de TrustZone es la extensión que se le ha dado a los procesadores ARM. Un único procesador podrá ejecutar código tanto del MS como del MN. Esto elimina la necesidad de tener un procesador que se encargue de las tareas del MS y otro para el MN. Esta característica hará al dispositivo más eficiente. 
-Para conseguir esta separación en dos mundos, se han hecho varios cambios en algunos de los componentes de los dispositivos.
-
-
-\paragraph{Bus AMBA3 AXI}
-A cada uno de los buses del sistema se le ha añadido una nueva señal de control tanto en los canales de lectura como en los de escritura. Estos bits, añadidos a la especificación del protocolo del bus AMBA3 AXI, se denominan bits No-Seguros.
-\begin{itemize}
-	\item AWPROT[1]: Escritura (baja es Segura y alta es No Segura).
-	\item ARPROT[1]: Lectura (baja es Segura y alta es No Segura).
-\end{itemize}
-
-Todos los buses máster enviarán esta señal cuando se quiera realizar una acción de lectura o escritura, y la lógica de los buses o esclavos debe decodificarlas e interpretarlas correctamente para asegurar que esa separación de mundos no se viola.
-
-\paragraph{Bus periférico AMBA3 APB}
-
-Otra de las principales características de la arquitectura TrustZone consiste en la posibilidad de hacer seguros a los periféricos (controladores de interrupciones, temporizadores y dispositivos de Entrada/Salida). Esto permite una seguridad punto a punto en lugar de únicamente proporcionar una seguridad en el procesado de los datos.
-
-\paragraph{Memoria}
-
-La inclusión del bit No-Seguro al bus se puede ver como una partición en dos de la memoria. El bit No-Seguro se considera como un 33º bit en el espacio de direcciones físicas. Se tendrá por tanto un espacio de direcciones físicas de 32 bits para las transacciones seguras y un espacio equivalente de 32 bits para las no seguras. Se debe tener especial cuidado para asegurar la integridad y coherencia de los datos en todas las localizaciones en las que se almacenen.
-
-\subsubsection{Arquitectura del procesador}
-Cada uno de los procesadores físicos provee al sistema de dos procesadores virtuales, uno considerado Seguro y otro No Seguro. Además, también proporciona un mecanismo para cambiar el contexto de ejecución de manera robusta entre Seguro y No Seguro, se le denomina Modo Monitor. Dependiendo de la identidad del procesador virtual desde el que se envíe una transacción, esta será etiquetada como segura o no segura haciendo uso del bit No-Seguro. Esto facilitará la integración de los procesadores virtuales en el sistema. El procesador virtual No Seguro solamente podrá acceder a los recursos del sistema que sean no seguros. En cambio, el procesador virtual Seguro podrá acceder a todos los recursos del sistema. \newline
+Tras realizar un recorrido por algunos de las redes blockchain más representativas y de algunas tecnologías alternativas a blockchain resulta conveniente realizar una comparativa resumen de todas. La tabla XXXXXXX recoge las principales características de algunas de ellas.
 
 
 \begin{figure}
 	\centering
-	\includegraphics[width=1\textwidth]{imagenes/monitor.jpg}
-	\caption{\label{fig1}Estructura de un procesador físico TrustZone \cite{trustzone}.}
+	\includegraphics[width=1\textwidth]{imagenes/Tablacomparativa.png}
+	\caption{\label{fig1}Tabla resumen comparativa Blockchain.}
 \end{figure}
-
-
-Los mecanismos por los cuales el procesador físico entra en modo monitor son vistos como excepciones al software del modo monitor. La entrada al modo monitor puede estar provocada por el software que ejecuta una determinada instrucción (llamada Secure Monitor Call, SMC) o por mecanismos de excepción hardware (IRQ, FIQ, …). \newline
-
-El mundo en el que el procesador se encuentra está marcado por el bit No-Seguro en el registro Secure Configuration Register (SCR) en CP15. Cuando se encuentra en modo monitor está siempre en el MS.
-Se ha mencionado que los espacios de memoria quedan divididos de manera que la memoria está separada para los dos mundos. Esta división que ocurre en la memoria fuera del procesador, debe ocurrir también en los componentes de memoria internos al procesador como es el sistema de memoria L1. El principal componente de la memoria L1 es el Memory Management Unit (MMU). El MMU es capaz de mapear el espacio de direcciones de memoria virtual que es visto por el software ejecutándose en el procesador con el espacio de direcciones físico existente fuera del procesador. La traducción se realiza haciendo uso de una tabla de traducción controlada por software.
-En un procesador con TrustZone, el hardware proporciona dos MMUs, una para cada procesador virtual. Esto permite que cada mundo posea su propia tabla de traducción de direcciones de manear totalmente independiente.
-
-\subsubsection{Arquitectura software}
-
-La implementación de un Mundo Seguro en el dispositivo requiere de un software seguro que se ejecute y haga uso de los datos sensibles que se encuentren en este. Cada desarrollador puede crear un MS que se adecúe a las necesidades y requerimientos de su sistema. \newline
-
-Existen muchas posibles arquitecturas software que podrán ser desarrolladas en el Mundo Seguro de un procesador con TrustZone habilitado. La arquitectura más compleja que se puede alojar en un MS es un sistema operativo. La más sencilla es una librería de código alojada en el MS. Entre estos dos extremos existen un gran abanico de posibilidades intermedias.
-
-
-\paragraph{Sistema operativo} 
-Un sistema operativo dedicado en el MS es un diseño complejo pero que abre un gran abanico de posibilidades. Puede simular la ejecución concurrente de varias aplicaciones del MS, descargar nuevas aplicaciones seguras y otro tipo de tareas seguras que serán totalmente independientes del MN. Cada procesador virtual tendrá un sistema operativo completo y se comportará como tal.
-
-\begin{figure}
-	\centering
-	\includegraphics[width=1\textwidth]{imagenes/secureSO.jpg}
-	\caption{\label{fig1}Esquema de un SO sobre el Mundo Seguro \cite{trustzone}.}
-\end{figure}
-
-\paragraph{Librería de código}
-Muchos casos de uso no justificarán la complejidad de un sistema operativo en el MS ya que sus requerimientos son mucho menores. Una sencilla librería de código que ejecute una tarea en el MS puede ser suficiente para muchos casos de uso. Esta librería se ejecutará mediante las pertinentes llamadas realizadas desde el sistema operativo del MN. El MS es por tanto un esclavo del MN ya que el MS no se podrá ejecutar independientemente.
-
-\subsubsection{Arrancado de un sistema seguro}
-Uno de los puntos más críticos de un sistema seguro es el arrancado. Muchos de los ataques se centran en la modificación del sistema cuando este se encuentra apagado. Por ejemplo, reemplazar la imagen del MS que se encuentra en la memoria flash del dispositivo con una imagen del MS modificada. Por tanto, para que el sistema no sea vulnerable se deberá comprobar la autenticidad del código en el tiempo de arranque. La estrategia que se sigue consiste en una cadena de confianza para el software del mundo seguro que partirá de un punto difícilmente manipulable. Esto se corresponderá con una determinada secuencia de arrancado.
-
-\paragraph{Secuencia de arrancado}
-Cuando el dispositivo se enciende, un procesador con TrustZone habilitado siempre comienza en el Mundo Seguro. Esto permite que se puedan realizar diversas comprobaciones de seguridad antes de que el Mundo Seguro arranque y tenga alguna oportunidad de modificar algún aspecto del sistema.\newline
-
-La figura XXXXXXXXXXXXx muestra una típica secuencia de arrancado. Tras encender el dispositivo se suele ejecutar un código que se encuentra en la ROM del dispositivo y que será el encargado de inicializar periféricos críticos del dispositivo. Este da paso a un código de arranque de segundo nivel que se encuentra en la memoria no-volátil externa del dispositivo. La secuencia continuará avanzando hasta que se haya completado el arranque del Mundo Seguro. Posteriormente se da paso al Mundo Normal y una vez este se haya completado se puede decir que el sistema se está ejecutando correctamente.
-Para que esta secuencia tenga sentido se deben añadir comprobaciones criptográficas en cada fase del arrancado seguro. Cada fase de la secuencia realizará una comprobación de la integridad de la siguiente fase a ejecutar. Se previene así que arranque cualquier tipo de código malicioso no autorizado o modificado. \newline
-
-\begin{figure}
-	\centering
-	\includegraphics[width=1\textwidth]{imagenes/secureboot.jpg}
-	\caption{\label{fig1}Secuencia de arrancado seguro \cite{trustzone}.}
-\end{figure}
-
-Para esta tarea se utiliza un algoritmo de cifrado de clave asimétrica, RSA-PSS (Rivest, Shamir and Adleman – Probabilistic Signature Scheme). En este protocolo, un vendedor de confianza generará una firma del código que se quiere desplegar haciendo uso de su clave privada. Esta firma irá incluida en el binario del software. La clave pública del vendedor se almacenará en el dispositivo en alguno de sus registros dedicados a este propósito que no podrán ser alterados. Esta clave pública se utilizará para verificar que el binario proporcionado por el vendedor no ha sido modificado, por ello se necesita que esta clave pública no pueda ser modificada por una propiedad de un atacante.
-Se crea por tanto una cadena de confianza que nace en un componente del dispositivo en el que se confía. A partir de este se podrá autenticar cualquier otro componente o software antes de que sea ejecutado. Una vez que se ha ejecutado la autenticación de la primera fase de la secuencia, las próximas autenticaciones de la secuencia podrán ser realizadas con claves públicas diferentes. Solamente la autenticación de la primera fase debe realizarse con la clave que se encuentra en los registros One-Time-Programmable (OTP) del dispositivo.
 
 
 

@@ -1,9 +1,28 @@
 This is BibTeX, Version 0.99dThe top-level auxiliary file: TFM.aux
 The style file: plain.bst
 Database file #1: bibliografia/bibliografia.bib
-Warning--to sort, need author or key in blockchaininfo
-Warning--to sort, need author or key in gnss
+Warning--to sort, need author or key in gartner
+Warning--to sort, need author or key in ublox
+Warning--to sort, need author or key in rtklib
+Warning--to sort, need author or key in ftpr2cggtts
+Warning--to sort, need author or key in zedboard
+Warning--to sort, need author or key in rpi
 Warning--to sort, need author or key in optee
+Warning--to sort, need author or key in buildroot
+Warning--to sort, need author or key in ptpd
+Warning--to sort, need author or key in bitcoincode
+Warning--to sort, need author or key in gnss
+Warning--to sort, need author or key in intel
+Warning--to sort, need author or key in amd
+Warning--to sort, need author or key in blockchaininfo
+Warning--to sort, need author or key in tangle
+Warning--to sort, need author or key in hashgraph
+Warning--to sort, need author or key in ucenter
+Warning--to sort, need author or key in reportklib
+Warning--to sort, need author or key in ftprob
+Warning--to sort, need author or key in gnssconverter
+Warning--to sort, need author or key in vivado
+Warning--to sort, need author or key in xilinxguide
 Warning--empty publisher in business
 Warning--empty year in business
-(There were 5 warnings)
+(There were 24 warnings)
