@@ -12,9 +12,24 @@ Bitcoin repository.
 Blockchain explorer.
 \newblock \url{https://www.blockchain.com/explorer}.
 
+\bibitem{bootgen}
+Bootgen user guide.
+\newblock
+  \url{https://www.xilinx.com/support/documentation/sw_manuals/xilinx2018_2/ug1283-bootgen-user-guide.pdf}.
+
 \bibitem{buildroot}
 Buildroot. making embedded linux easy.
 \newblock \url{https://buildroot.org/}.
+
+\bibitem{battery}
+Changing the cryptographic key in zynq-7000 ap soc.
+\newblock
+  \url{https://www.xilinx.com/support/documentation/application_notes/xapp1223-crypto-key-change.pdf}.
+
+\bibitem{armexample}
+Cortex-a9 trustzone example.
+\newblock
+  \url{http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.faqs/ka15417.html}.
 
 \bibitem{ftpr2cggtts}
 Ftp of bureau international des poids et measures.
@@ -48,6 +63,12 @@ Open portable trusted execution enviroment.
 \bibitem{ptpd}
 Precision time protocol daemon.
 \newblock \url{https://github.com/ptpd/ptpd}.
+
+\bibitem{guiaxilinx}
+Programming arm trustzone architecture on the xilinx zynq-7000 all programmable
+  soc.
+\newblock
+  \url{https://www.xilinx.com/support/documentation/user_guides/ug1019-zynq-trustzone.pdf}.
 
 \bibitem{xilinxguide}
 Programming arm trustzone architecture on the xilinx zynq-7000 all programmable
@@ -87,6 +108,11 @@ U-center, gnss evaluation software for windows.
 \bibitem{vivado}
 Vivado design suite.
 \newblock \url{https://www.xilinx.com/products/design-tools/vivado.html}.
+
+\bibitem{vivadotutorial}
+Vivado trustzone tutorial.
+\newblock
+  \url{https://perso.univ-st-etienne.fr/bl16388h/VIVADO_TrustZone_tutorial.pdf}.
 
 \bibitem{zedboard}
 Zedboard development kit.
