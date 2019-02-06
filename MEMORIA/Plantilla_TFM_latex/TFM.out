@@ -36,7 +36,8 @@
 \BOOKMARK [2][-]{subsection.4.2.1}{Dise\361o TrustZone Hello World}{section.4.2}% 36
 \BOOKMARK [2][-]{subsection.4.2.2}{Problemas para el dise\361o deseado}{section.4.2}% 37
 \BOOKMARK [1][-]{section.4.3}{ARM TrustZone en Raspberry Pi 3}{chapter.4}% 38
-\BOOKMARK [0][-]{chapter.5}{Propuesta Blockchain basada en tiempo confiable}{}% 39
-\BOOKMARK [1][-]{section.5.1}{Forks en blockchain}{chapter.5}% 40
-\BOOKMARK [1][-]{section.5.2}{El papel del timestamp en blockchain}{chapter.5}% 41
-\BOOKMARK [0][-]{chapter*.37}{Bibliograf\355a}{}% 42
+\BOOKMARK [2][-]{subsection.4.3.1}{Construcci\363n del entorno seguro con OP-TEE}{section.4.3}% 39
+\BOOKMARK [0][-]{chapter.5}{Propuesta Blockchain basada en tiempo confiable}{}% 40
+\BOOKMARK [1][-]{section.5.1}{Forks en blockchain}{chapter.5}% 41
+\BOOKMARK [1][-]{section.5.2}{El papel del timestamp en blockchain}{chapter.5}% 42
+\BOOKMARK [0][-]{chapter*.37}{Bibliograf\355a}{}% 43

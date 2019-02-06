@@ -103,3 +103,64 @@ Al mismo tiempo que se encuentra este problema se descubre el proyecto OP-TEE. D
 
 \section{ARM TrustZone en Raspberry Pi 3}
 
+El principal motivo del cambio de Zedboard a Raspberry Pi 3 se debe al proyecto OP-TEE. El objetivo del proyecto OP-TEE además de tener un objetivo que encaja a la perfección con los requisitos del trabajo, es un proyecto muy activo que intenta solucionar todos los \textit{Issues} que se publican en su repositorio. \newline
+
+El propósito de OP-TEE es principalmente educacional. Esto se debe a que no proporciona un sistema seguro útil en un entorno de producción, solamente para entornos de desarrollo. Raspberry Pi 3 proporciona un procesador que soporta ARM TrustZone, sin embargo, no proporciona registros OTP. La diferencia con Zedboard es que en este caso se puede hacer uso de la técnica que utiliza el Boot Header para el arranque seguro. La clave pública se inserta en este Boot Header para posteriormente poder realizar el descifrado "autenticando" el código.
+
+\subsection{Construcción del entorno seguro con OP-TEE}
+En el repositorio oficial del proyecto OP-TEE \cite{optee} se proporcionan los archivos necesarios para compilar todos los componentes necesarios (kernel de Linux, ARM Trusted Firmware, etc). Sin embargo, para facilitar la tarea proporcionan una serie de \textit{Makefiles} y \textit{shell-scripts} que realizan todo ese trabajo de manera autónoma.\newline
+
+Los comandos a seguir para dicho proceso se recogen a continuación:
+
+\begin{enumerate}
+	\item Instalar una serie de paquetes requeridos previamente.
+
+\begin{lstlisting}
+$ sudo apt-get install android-tools-adb android-tools-fastboot autoconf automake bc bison build-essential cscope curl device-tree-compiler  expect flex ftp-upload gdisk iasl libattr1-dev libc6:i386 libcap-dev libfdt-dev libftdi-dev libglib2.0-dev libhidapi-dev libncurses5-dev libpixman-1-dev libssl-dev libstdc++6:i386 libtool libz1:i386 make mtools netcat python-crypto python-serial python-wand unzip uuid-dev xdg-utils xterm xz-utils zlib1g-dev git
+\end{lstlisting}
+
+
+\item Instalar el repositorio Android y configurar git.
+
+
+\begin{lstlisting}
+$ mkdir ~/bin 
+$ PATH=~/bin:$PATH
+$ curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+$ chmod a+x ~/bin/repo
+$ git config --global user.name "Your Name"
+$ git config --global user.email "you@example.com"
+\end{lstlisting}
+
+\item Descargar el código de OP-TEE y compilar.
+
+\begin{lstlisting}
+$ mkdir -p $HOME/devel/optee
+$ cd $HOME/devel/optee
+$ repo init -u https://github.com/OP-TEE/manifest.git -m rpi3.xml
+$ repo sync
+$ cd build
+$ make toolchains
+$ make
+$ make img-help
+\end{lstlisting}
+
+Este último comando muestra por pantalla los pasos a seguir para realizar las particiones de la tarjeta SD y que cada una contenga los archivos correspondientes.
+
+\end{enumerate}
+
+
+\subsubsection{Linux customizado con Buildroot}
+El kernel Linux que crea el proyecto por defecto contiene una serie muy limitada de paquetes. El objetivo de esto es que la imagen sea tan pequeña como sea posible. Sin embargo, en el caso de que se necesite un sistema operativo con ciertos paquetes se pueden realizar los cambios pertinentes para que la compilación los incluya directamente. \newline
+
+La herramienta que usa OP-TEE para generar Linux es Buildroot \cite{buildroot}. En su repositorio se encuentran todos los paquetes que se pueden incluir. El procedimiento para añadirlos en el proyecto OP-TEE consiste en modificar el archivo \textit{common.mk} incluyendo una linea con el nombre del paquete deseado. En este caso se incluye el paquete PTPd con la siguiente línea:
+
+
+\begin{lstlisting}
+...
+buildroot: optee-os
+@echo "BR2_PACKAGE_PTPD=y" >> ../out-br/extra.conf
+...
+\end{lstlisting}
+
+Tras este cambio será necesario volver a ejecutar el comando \textit{make} en el directorio \textit{build} y volver a volcar los archivos sobre la tarjeta SD. El paquete PTPd está ahora disponible para su uso. 
