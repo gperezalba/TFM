@@ -1,6 +1,7 @@
 This is BibTeX, Version 0.99dThe top-level auxiliary file: TFM.aux
 The style file: plain.bst
 Database file #1: bibliografia/bibliografia.bib
+Warning--I didn't find a database entry for "ftpro"
 Warning--to sort, need author or key in gartner
 Warning--to sort, need author or key in ublox
 Warning--to sort, need author or key in rtklib
@@ -21,6 +22,7 @@ Warning--to sort, need author or key in ucenter
 Warning--to sort, need author or key in reportklib
 Warning--to sort, need author or key in ftprob
 Warning--to sort, need author or key in gnssconverter
+Warning--to sort, need author or key in roa
 Warning--to sort, need author or key in guiaxilinx
 Warning--to sort, need author or key in vivadotutorial
 Warning--to sort, need author or key in armexample
@@ -30,4 +32,4 @@ Warning--to sort, need author or key in vivado
 Warning--to sort, need author or key in xilinxguide
 Warning--empty publisher in business
 Warning--empty year in business
-(There were 29 warnings)
+(There were 31 warnings)

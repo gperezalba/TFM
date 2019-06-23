@@ -7,37 +7,43 @@
 \BOOKMARK [2][-]{subsection.1.3.3}{Protocolo Blockchain}{section.1.3}% 7
 \BOOKMARK [1][-]{section.1.4}{Organizaci\363n de la memoria}{chapter.1}% 8
 \BOOKMARK [0][-]{chapter.2}{Estado de la t\351cnica}{}% 9
-\BOOKMARK [1][-]{section.2.1}{Trazabilidad de tiempo}{chapter.2}% 10
-\BOOKMARK [2][-]{subsection.2.1.1}{Global Navigation Satellite System \(GNSS\)}{section.2.1}% 11
-\BOOKMARK [2][-]{subsection.2.1.2}{Transferencia de tiempo}{section.2.1}% 12
-\BOOKMARK [2][-]{subsection.2.1.3}{R2CGGTTS}{section.2.1}% 13
-\BOOKMARK [1][-]{section.2.2}{Trusted Execution Environments \(TEE\)}{chapter.2}% 14
-\BOOKMARK [2][-]{subsection.2.2.1}{Intel Software Guard Extensions \(Intel SGX\)}{section.2.2}% 15
-\BOOKMARK [2][-]{subsection.2.2.2}{AMD GuardMI Technology}{section.2.2}% 16
-\BOOKMARK [2][-]{subsection.2.2.3}{ARM TrustZone}{section.2.2}% 17
-\BOOKMARK [1][-]{section.2.3}{Revisi\363n de tecnolog\355as Blockchain}{chapter.2}% 18
-\BOOKMARK [2][-]{subsection.2.3.1}{Origen e historia}{section.2.3}% 19
-\BOOKMARK [2][-]{subsection.2.3.2}{Funcionamiento}{section.2.3}% 20
-\BOOKMARK [2][-]{subsection.2.3.3}{Aspectos clave del protocolo Blockchain}{section.2.3}% 21
-\BOOKMARK [1][-]{section.2.4}{El problema de escalabilidad de Blockchain}{chapter.2}% 22
-\BOOKMARK [2][-]{subsection.2.4.1}{El Trilema}{section.2.4}% 23
-\BOOKMARK [2][-]{subsection.2.4.2}{Alternativas a Blockchain}{section.2.4}% 24
-\BOOKMARK [0][-]{chapter.3}{Desarrollo de un software de an\341lisis de trazabilidad de tiempo}{}% 25
-\BOOKMARK [1][-]{section.3.1}{Introducci\363n}{chapter.3}% 26
-\BOOKMARK [1][-]{section.3.2}{Generaci\363n de ficheros RINEX}{chapter.3}% 27
-\BOOKMARK [2][-]{subsection.3.2.1}{Dispositivo U-blox}{section.3.2}% 28
-\BOOKMARK [2][-]{subsection.3.2.2}{RTKLIB}{section.3.2}% 29
-\BOOKMARK [2][-]{subsection.3.2.3}{Otros ficheros RINEX disponibles}{section.3.2}% 30
-\BOOKMARK [1][-]{section.3.3}{Generaci\363n de ficheros CGGTTS}{chapter.3}% 31
-\BOOKMARK [2][-]{subsection.3.3.1}{Problemas con la herramienta}{section.3.3}% 32
-\BOOKMARK [0][-]{chapter.4}{Desarrollo de software confiable}{}% 33
-\BOOKMARK [1][-]{section.4.1}{Introducci\363n}{chapter.4}% 34
-\BOOKMARK [1][-]{section.4.2}{ARM TrustZone en Zedboard}{chapter.4}% 35
-\BOOKMARK [2][-]{subsection.4.2.1}{Dise\361o TrustZone Hello World}{section.4.2}% 36
-\BOOKMARK [2][-]{subsection.4.2.2}{Problemas para el dise\361o deseado}{section.4.2}% 37
-\BOOKMARK [1][-]{section.4.3}{ARM TrustZone en Raspberry Pi 3}{chapter.4}% 38
-\BOOKMARK [2][-]{subsection.4.3.1}{Construcci\363n del entorno seguro con OP-TEE}{section.4.3}% 39
-\BOOKMARK [0][-]{chapter.5}{Propuesta Blockchain basada en tiempo confiable}{}% 40
-\BOOKMARK [1][-]{section.5.1}{Forks en blockchain}{chapter.5}% 41
-\BOOKMARK [1][-]{section.5.2}{El papel del timestamp en blockchain}{chapter.5}% 42
-\BOOKMARK [0][-]{chapter*.37}{Bibliograf\355a}{}% 43
+\BOOKMARK [1][-]{section.2.1}{Introducci\363n}{chapter.2}% 10
+\BOOKMARK [1][-]{section.2.2}{Trazabilidad de tiempo}{chapter.2}% 11
+\BOOKMARK [2][-]{subsection.2.2.1}{Global Navigation Satellite System \(GNSS\)}{section.2.2}% 12
+\BOOKMARK [2][-]{subsection.2.2.2}{Transferencia de tiempo}{section.2.2}% 13
+\BOOKMARK [2][-]{subsection.2.2.3}{R2CGGTTS}{section.2.2}% 14
+\BOOKMARK [1][-]{section.2.3}{Trusted Execution Environments \(TEE\)}{chapter.2}% 15
+\BOOKMARK [2][-]{subsection.2.3.1}{Intel Software Guard Extensions \(Intel SGX\)}{section.2.3}% 16
+\BOOKMARK [2][-]{subsection.2.3.2}{AMD GuardMI Technology}{section.2.3}% 17
+\BOOKMARK [2][-]{subsection.2.3.3}{ARM TrustZone}{section.2.3}% 18
+\BOOKMARK [1][-]{section.2.4}{Revisi\363n de tecnolog\355as Blockchain}{chapter.2}% 19
+\BOOKMARK [2][-]{subsection.2.4.1}{Origen e historia}{section.2.4}% 20
+\BOOKMARK [2][-]{subsection.2.4.2}{Funcionamiento}{section.2.4}% 21
+\BOOKMARK [2][-]{subsection.2.4.3}{Aspectos clave del protocolo Blockchain}{section.2.4}% 22
+\BOOKMARK [1][-]{section.2.5}{El problema de escalabilidad de Blockchain}{chapter.2}% 23
+\BOOKMARK [2][-]{subsection.2.5.1}{El Trilema}{section.2.5}% 24
+\BOOKMARK [2][-]{subsection.2.5.2}{Alternativas a Blockchain}{section.2.5}% 25
+\BOOKMARK [0][-]{chapter.3}{Desarrollo de un software de an\341lisis de trazabilidad de tiempo}{}% 26
+\BOOKMARK [1][-]{section.3.1}{Introducci\363n}{chapter.3}% 27
+\BOOKMARK [1][-]{section.3.2}{Generaci\363n de ficheros RINEX}{chapter.3}% 28
+\BOOKMARK [2][-]{subsection.3.2.1}{Dispositivo U-blox}{section.3.2}% 29
+\BOOKMARK [2][-]{subsection.3.2.2}{RTKLIB}{section.3.2}% 30
+\BOOKMARK [2][-]{subsection.3.2.3}{Otros ficheros RINEX disponibles}{section.3.2}% 31
+\BOOKMARK [1][-]{section.3.3}{Generaci\363n de ficheros CGGTTS}{chapter.3}% 32
+\BOOKMARK [2][-]{subsection.3.3.1}{Problemas con la herramienta}{section.3.3}% 33
+\BOOKMARK [1][-]{section.3.4}{Trazabilidad de tiempo con ficheros CGGTTS}{chapter.3}% 34
+\BOOKMARK [2][-]{subsection.3.4.1}{Software de procesado de ficheros CGGTTS}{section.3.4}% 35
+\BOOKMARK [0][-]{chapter.4}{Desarrollo de software confiable}{}% 36
+\BOOKMARK [1][-]{section.4.1}{Introducci\363n}{chapter.4}% 37
+\BOOKMARK [1][-]{section.4.2}{ARM TrustZone en Zedboard}{chapter.4}% 38
+\BOOKMARK [2][-]{subsection.4.2.1}{Dise\361o TrustZone Hello World}{section.4.2}% 39
+\BOOKMARK [2][-]{subsection.4.2.2}{Problemas para el dise\361o deseado}{section.4.2}% 40
+\BOOKMARK [1][-]{section.4.3}{ARM TrustZone en Raspberry Pi 3}{chapter.4}% 41
+\BOOKMARK [2][-]{subsection.4.3.1}{Construcci\363n del entorno seguro con OP-TEE}{section.4.3}% 42
+\BOOKMARK [0][-]{chapter.5}{Propuesta Blockchain basada en tiempo confiable}{}% 43
+\BOOKMARK [1][-]{section.5.1}{Forks en blockchain}{chapter.5}% 44
+\BOOKMARK [1][-]{section.5.2}{El papel del timestamp en blockchain}{chapter.5}% 45
+\BOOKMARK [1][-]{section.5.3}{Propuesta}{chapter.5}% 46
+\BOOKMARK [1][-]{section.5.4}{Experimento}{chapter.5}% 47
+\BOOKMARK [1][-]{section.5.5}{Resultados obtenidos}{chapter.5}% 48
+\BOOKMARK [0][-]{chapter*.37}{Bibliograf\355a}{}% 49

@@ -2,7 +2,7 @@
 
 \section{Introducción}
 
-Como se describe en los objetivos del trabajo, una de las primeras tareas es conseguir un mecanismo con el cuál poder comparar dos relojes. Sin este mecanismo el trabajo carece de sentido ya que es vital conocer la precisión de la sincronización entre relojes. Denominado trazabilidad de tiempo, este mecanismo es a menudo usado por diversos grupos de trabajo relacionados con el tiempo y el posicionamiento para algunos propósitos específicos.\newline
+Como se describe en los objetivos del trabajo, una de las primeras tareas es conseguir un mecanismo con el cuál comprobar la sincronización de dos relojes. Sin este mecanismo el trabajo carece de sentido ya que es vital conocer la precisión de la sincronización entre relojes. Denominado trazabilidad de tiempo, este mecanismo es a menudo usado por diversos grupos de trabajo relacionados con el tiempo y el posicionamiento para algunos propósitos específicos.\newline
 
 Pese a ser conocido para estos grupos, es necesario disponer de los dispositivos, software y bibliotecas requeridos para su correcto funcionamiento. Todo este procedimiento se recoge en el presente apartado.
 
@@ -85,15 +85,52 @@ Cada versión nueva del software R2CGGTTS ha ido incluyendo novedades a lo largo
 
 En este tiempo se hace uso de herramientas que permiten la conversión de versiones de los ficheros RINEX \cite{gnssconverter}. Algunas de estas herramientas también permiten la conversión de ficheros raw en formato ublox a la versión deseada de fichero RINEX. Sin embargo, de ninguna herramienta se obtiene la salida esperada. \newline
 
-Durante este tiempo de trabajo aparece la versión 8 del software R2CGGTTS. Entre las novedades que incluye, la principal consiste en permitir todas las versiones de ficheros RINEX. Cuando se subsana este problema aparece el siguiente que merece la pena mencionar.
+Durante este tiempo de trabajo aparece la versión 8 del software R2CGGTTS. Entre las novedades que incluye, la principal consiste en permitir todas las versiones de ficheros RINEX. Cuando se subsana este problema se está en perfecta disposición para crear los ficheros CGGTTS.
 
-\subsubsection{Requisito GPS P1 code o fichero biasC1P1.dat}
-En la documentación, en el apartado de ficheros de entrada aparece un requisito: "\textit{biasC1P1.dat :Nedded if GPS P1 code is missing in Rinex observation file}". En caso de que el fichero RINEX no disponga de esa información, se necesitará un fichero adicional. \newline
+\section{Trazabilidad de tiempo con ficheros CGGTTS}
+Una vez se ha generado un fichero CGGTTS propio se necesita el correspondiente fichero CGGTTS de otro receptor GPS (presumiblemente de un laboratorio) con el que se quiera comparar. Se elige el Real Instituto Observatorio de la Armada (ROA) \cite{roa} como laboratorio con el que realizar la trazabilidad de tiempo. En el servidor FTP del ROB \cite{ftpro} se colocan diariamente los ficheros CGGTTS de los principales laboratorios de varios países (entre ellos España y el ROA). 
 
-Tras investigar sobre el tema, se llega a la conclusión de que la información \textit{GPS P1 code} es dependiente del receptor. Con el receptor U-blox XXXXXXXXXXXXXJoseLUis no es posible crear un RINEX que contenga esta información, sólo ciertos receptores lo permiten. \newline
+\subsection{Software de procesado de ficheros CGGTTS}
+Con 2 ficheros CGGTTS del mismo día procedentes de dos receptores GPS distintos se tiene todo lo necesario para comprobar las desviaciones que tuvo un reloj respecto al otro dicho día. \newline
 
-XXXXXXXXXXLista de receptores P1XXXXXXX \newline
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/cggtts.PNG}
+	\caption{\label{fig1}Ejemplo de fichero CGGTTS \cite{timetransfer}.}
+\end{figure}
 
-En el apartado "Generación de ficheros RINEX" se menciona un servidor FTP en el que el ROB almacena diariamente sus ficheros RINEX de manera que estén disponibles para su descarga. Los receptores utilizados por este grupo son bastante más avanzados y permiten crear ficheros RINEX con toda la información necesaria. Como plan alternativo, se hace uso de estos fichero RINEX para comprobar que efectivamente con esos ficheros el software R2CGGTTS se ejecuta satisfactoriamente y genera los ficheros CGGTTS esperados.
+Como se observa en la Figura 3.4, entre la información que contiene el fichero CGGTTS la columna REFGPS será vital para conseguir la trazabilidad temporal. La columna REFGPS contiene la diferencia de hora del receptor GPS respecto a una referencia temporal que será la misma para los dos ficheros CGGTTS. Al contener la misma referencia temporal, se puede computar la desviación entre relojes como:
+
+\begin{equation}
+\Delta t = REFGPS(local) - REFGPS(ROA) 
+\end{equation}
+
+\begin{equation}
+\Delta t = (UTC(local) - REF) - (UTC(ROA) - REF)
+\end{equation}
+
+\begin{equation}
+\Delta t = UTC(local) - UTC(ROA)
+\end{equation}
+
+La técnica que permite esta comparación se denomina \textit{"Satelites in common view"}, por lo que se tendrán que computar las diferencias solamente entre los satélites que se encuentren en ambos ficheros CGGTTS. En la columna denominada PRN de la Figura 3.4 se observan el identificador del satélite que proporciona la medida de dicha fila. Para una misma franja temporal (indicada por la columna STTIME) existen varios satélites que proporcionan medidas. Por lo tanto, el software debe computar las diferencias entre columnas REFGPS cuando exista una medida de un satélite en una misma franja temporal en los dos ficheros CGGTTS y obtener un promedio para cada franja temporal. Surgen algunas dudas sobre cómo sería la manera más óptima de realizar el promedio y de si sería apropiado utilizar alguna ponderación para las medidas en función de algún otro parámetro. Se decide entonces plantear estas cuestiones al ROA y en su respuesta proporcionan ciertos scripts que ellos utilizan para computar la trazabilidad temporal entre dos ficheros CGGTTS. \newline
+
+Los scripts proporcionados por el ROA (Anexo XXXXXXXXXXXXXXXX) realizan todos los pasos descritos en esta sección. Dichos pasos se pueden resumir en los siguientes puntos:
+
+\begin{itemize}
+	\item Lectura de ambos ficheros CGGTTS.
+	\item Satélites en \textit{common view} para cada franja temporal.
+	\item Computar la diferencia para cada instante y cada satélite.
+	\item Se realiza un promedio ponderado para todas las medidas disponibles para una misma franja horaria. La ponderación se basa en la columna ELV que indica la elevación a la que se encuentra el satélite en cuestión, factor determinante para la calidad de la medida.
+	\item Dibujar una figura con las diferencias obtenidas.
+\end{itemize}
+
+En la figura 3.5 se observa la figura que genera dicho script. Las diferencias obtenidas se presentan de varias formas: \textit{raw}, la media de cada franja temporal, con un filtro 3 sigma y con un filtrado Vondrak que reduce el ruido. La interpretación de la figura indica que la desviación del reloj del receptor GPS colocado en la UGR con respecto al receptor GPS de ROA se encuentra entre -40 ns y +30 ns. Se obtiene así la precisión de la sincronización entre dos relojes haciendo uso de la técnica satélites en \textit{common view}.
+
+\begin{figure} 
+	\centering
+	\includegraphics[width=1\textwidth]{imagenes/resultado_cv2.PNG}
+	\caption{\label{fig1}Trazabilidad de tiempo entre UGR y ROA.}
+\end{figure}
 
 

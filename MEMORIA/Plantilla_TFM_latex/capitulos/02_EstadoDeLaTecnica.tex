@@ -1,9 +1,13 @@
 \chapter{Estado de la técnica}
+
+\section{Introducción}
+En el capítulo de Introducción se han mencionado las principales técnicas o tecnologías relevantes en el presente trabajo. En el capítulo Estado de la técnica se abordará la situación actual de la técnica de Trazabilidad temporal y las tecnologías Trusted Execution Environment y Blockchain.
+
 \section{Trazabilidad de tiempo}
 Una de las bases sobre las que se asienta el trabajo es la trazabilidad de tiempo. Conocer la trazabilidad de un reloj a una referencia temporal universal es esencial para tener un mecanismo objetivo con el que medir la precisión de un reloj.
 
 \subsection{Global Navigation Satellite System (GNSS)}
-La GNSS se trata de un conjunto de satélites que permiten a un usuario situado en La Tierra calcular su posición exacta de manera bastante precisas (desde algunos metros hasta centímetros de precisión). Existen varios de estos sistemas de posicionamiento, entre ellos están GPS, GLONASS, Galileo, etc. Este tipo de sistemas consisten en una constelación de satélites encargados de transmitir unas determinadas señales sobre La Tierra. Los relojes que portan dichos satélites están sincronizados en base a una escala temporal definida por el sistema propio de cada constelación. Con esto se consigue que las señales emitidas por cada satélite compartan una misma referencia temporal. Esto es vital para el buen funcionamiento del sistema. \newline
+La GNSS se trata de un conjunto de satélites que permiten a un usuario situado en La Tierra calcular su posición exacta de manera bastante precisa (desde algunos metros hasta centímetros de precisión). Existen varios de estos sistemas de posicionamiento, entre ellos están GPS, GLONASS, Galileo, etc. Este tipo de sistemas consisten en una constelación de satélites encargados de transmitir unas determinadas señales sobre La Tierra. Los relojes que portan dichos satélites están sincronizados en base a una escala temporal definida por el sistema propio de cada constelación. Con esto se consigue que las señales emitidas por cada satélite compartan una misma referencia temporal. Esto es vital para el buen funcionamiento del sistema. \newline
 
 El equipo receptor de un usuario que pretende usar el sistema GNSS para determinar su posición consiste de una antena que recibe las señales emitidas por estos satélites, y un dispositivo que sea capaz de traducir estas señales recibidas en una posición. Los cálculos realizados por este dispositivo se basan en la diferencia temporal entre la emisión de la señal por parte de los satélites y la recepción por parte de la antena del usuario. Este retardo de propagación se traduce fácilmente en una distancia que separa a cada satélite de la antena, ya que la señal viaja a la velocidad de la luz. \newline
 

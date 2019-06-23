@@ -13,7 +13,7 @@ Como cualquier otra nueva tecnología, Blockchain debe pasar por todas las fases
 	\caption{\label{fig1}Curva Gartner de Bitcoin \cite{gartner}.}
 \end{figure}
 
-El gran abanico de posibilidades que parece ofrecer blockchain a parte de Bitcoin hace que se llegue al pico de expectación de la tecnología. Aunque se empieza a entender que blockchain y Bitcoin no son la misma cosa, el interés por blockchain se sigue manifestando de la manera más accesible por cualquier persona, comprando bitcoin. No se debe confundir la curva de la figura XXXXXX con la del precio de Bitcoin. La fase de desilusión de la tecnología no se corresponde con la bajada de precio de Bitcoin. A medida que se estudia a fondo blockchain y todos sus posibles casos de uso afloran todos los inconvenientes y problemas de la tecnología. El principal problema es la escalabilidad. Este hace que se empiece a pensar que la tecnología que parecía poderse aplicar a un sinfín de usos ahora no se pueda aplicar a nada. En la fase "pendiente de la iluminación" en la que se encuentra blockchain actualmente se trata de solucionar todos los problemas que se han descubierto en la anterior fase para poder aplicar la tecnología a los sectores en los que de verdad aporta valor. Es así como se consigue llegar a la "meseta de productividad".  
+El gran abanico de posibilidades que parece ofrecer blockchain a parte de Bitcoin hace que se llegue al pico de expectación de la tecnología. Aunque se empieza a entender que blockchain y Bitcoin no son la misma cosa, el interés por blockchain se sigue manifestando de la manera más accesible por cualquier persona, comprando bitcoin. No se debe confundir la curva de la figura XXXXXX con la del precio de Bitcoin. La fase de desilusión de la tecnología no se corresponde con la bajada de precio de Bitcoin. A medida que se estudia a fondo blockchain y todos sus posibles casos de uso afloran todos los inconvenientes y problemas de la tecnología. El principal problema es la escalabilidad. Este hace que se empiece a pensar que la tecnología que parecía poderse aplicar a un sinfín de usos ahora no se pueda aplicar a nada. En la fase \textit{pendiente de la iluminación} en la que se encuentra blockchain actualmente se tratan de solucionar todos los problemas que se han descubierto en la anterior fase para poder aplicar la tecnología a los sectores en los que de verdad aporta valor. Es así como se consigue llegar a la "meseta de productividad".  
 
 
 
@@ -26,14 +26,14 @@ En el apartado ANTERIORXXXXXXXXXXXXXXXXXXX se describen algunos de los hitos má
 A continuación se enumeran los objetivos del presente trabajo, partiendo desde los más simples y concretos hasta llegar a los objetivos que constituyan el sistema que se quiere desarrollar:
 
 \begin{enumerate}
-	\item Mecanismo con el cuál comparar dos relojes. Para ello se necesita comparar cada reloj por separado con una misma referencia temporal mutua para ambos.
-	\item Generación de ficheros RINEX mediante un dispositivo de posicionamiento GPS.
+	\item Mecanismo con el cuál comparar la sincronización de dos relojes. Para ello se necesita comparar cada reloj por separado con una misma referencia temporal mutua para ambos.
+	\item Generación de ficheros RINEX mediante un dispositivo receptor GPS.
 	\item A partir de los ficheros RINEX y haciendo uso del software R2CGGTTS generar el fichero con el que obtener la trazabilidad temporal. Al fichero se le denomina CGGTTS.
 	\item Estudiar los distintos fabricantes de procesadores que ofrecen Trusted Execution Environment (TEE). A partir del estudio elegir el sistema empotrado que se usará.
 	\item Desarrollar una aplicación de ejemplo que se ejecute en uno de estos enclaves seguros de ejecución.
 	\item Desarrollar un sistema operativo seguro y confiable que constituya el ambiente de ejecución seguro en el que se ejecutará la aplicación desarrollada.
 	\item Ejecución de un protocolo de sincronización de relojes que proporcione precisión al sistema. En concreto PTPd (Precision Time Protocol daemon).
-	\item La aplicación será la encargada de realizar el sellado temporal de información. En concreto, realizará el sellado temporal de los \textit{hashes} los bloques de blockchain y del fichero CGGTTS.
+	\item La aplicación será la encargada de realizar el sellado temporal de información. En concreto, realizará el sellado temporal de los \textit{hashes}, los bloques de blockchain y del fichero CGGTTS.
 	\item Desarrollar un protocolo blockchain alternativo que haga uso del sistema de sellado temporal confiable.
 	\item Evaluación de la mejora de escalabilidad conseguida con el protocolo desarrollado.
 \end{enumerate}
